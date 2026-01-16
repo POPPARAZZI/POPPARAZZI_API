@@ -1,0 +1,8 @@
+rootProject.name = 'popparazzi'
+
+include 'popparazzi-common'
+include 'popparazzi-domain'
+include 'popparazzi-api'
+include 'popparazzi-chat'
+include 'popparazzi-push-notification'
+

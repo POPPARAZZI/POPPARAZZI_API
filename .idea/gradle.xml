@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="GradleSettings">
+    <option name="linkedExternalProjectsSettings">
+      <GradleProjectSettings>
+        <option name="externalProjectPath" value="$PROJECT_DIR$" />
+        <option name="gradleHome" value="" />
+        <option name="modules">
+          <set>
+            <option value="$PROJECT_DIR$" />
+            <option value="$PROJECT_DIR$/popparazzi-api" />
+            <option value="$PROJECT_DIR$/popparazzi-chat" />
+            <option value="$PROJECT_DIR$/popparazzi-common" />
+            <option value="$PROJECT_DIR$/popparazzi-domain" />
+            <option value="$PROJECT_DIR$/popparazzi-push-notification" />
+          </set>
+        </option>
+      </GradleProjectSettings>
+    </option>
+  </component>
+</project>

@@ -1,0 +1,11 @@
+plugins {
+    id 'org.springframework.boot' version '3.2.1'
+    id 'io.spring.dependency-management'
+    id 'java'
+}
+
+dependencies {
+    implementation project(':popparazzi-common')
+
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+}
