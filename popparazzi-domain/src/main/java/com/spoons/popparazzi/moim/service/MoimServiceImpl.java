@@ -1,8 +1,8 @@
 package com.spoons.popparazzi.moim.service;
 
-import com.spoons.popparazzi.exception.BusinessException;
+import com.spoons.popparazzi.error.exception.BusinessException;
 import com.spoons.popparazzi.moim.dto.command.CreateMoimCommand;
-import com.spoons.popparazzi.moim.exception.MoimErrorCode;
+import com.spoons.popparazzi.moim.error.MoimErrorCode;
 import org.springframework.stereotype.Service;
 
 @Service

@@ -153,6 +153,10 @@ throw new BusinessException(MoimErrorCode.Moim_NOT_FOUND);
 
 API 계층에서는 GlobalExceptionHandler 를 통해 공통 응답으로 변환합니다.
 
+## 에러 코드 
+* ErrorCode.java 파이에 코드 규칙 확인 및 작성해주세요.
+* 예시로 있는 code는 임시이기때문에 참고로만 봐주세요.
+
 ---
 
 ## 이 구조를 선택한 이유
