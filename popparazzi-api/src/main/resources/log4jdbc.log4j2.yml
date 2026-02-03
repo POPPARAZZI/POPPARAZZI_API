@@ -1,0 +1,8 @@
+log4jdbc:
+  superdelegate:
+    name: net.sf.log4jdbc.log.slf4j.Slf4jSpyLogDelegator
+  dump:
+    sql:
+      lengthiness: 0
+  drivers: com.mysql.cj.jdbc.Driver
+

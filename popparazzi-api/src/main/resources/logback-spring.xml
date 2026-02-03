@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 60초마다 설정 파일의 변경을 확인 하여 변경시 갱신 -->
+<configuration scan="true" scanPeriod="60 seconds">
+	<!--springProfile 태그를 사용하면 logback 설정파일에서 복수개의 프로파일을 설정할 수 있다. -->
+	<springProfile name="local">
+		<property resource="logback.yml" />
+	</springProfile>
+	<springProfile name="dev">
+		<property resource="logback.yml" />
+	</springProfile>
+	<!--Environment 내의 프로퍼티들을 개별적으로 설정할 수도 있다. -->
+	<springProperty scope="context" name="LOG_LEVEL"
+		source="logging.level.root" />
+
+	<!-- log file path -->
+	<property name="LOG_PATH" value="${log.config.path}" />
+	<!-- log file name -->
+	<property name="LOG_FILE_NAME" value="${log.config.filename}" />
+	<!-- err log file name -->
+	<property name="ERR_LOG_FILE_NAME" value="err_log" />
+	<!-- pattern -->
+	<property name="LOG_PATTERN"
+		value="%-5level %d{yy-MM-dd HH:mm:ss}[%thread] [%logger{0}:%line] - %msg%n" />
+
+	<!-- Console Appender -->
+	<appender name="CONSOLE"
+		class="ch.qos.logback.core.ConsoleAppender">
+		<encoder
+			class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+			<pattern>${LOG_PATTERN}</pattern>
+		</encoder>
+	</appender>
+
+	<appender name="STDOUT"
+		class="ch.qos.logback.core.ConsoleAppender">
+		<encoder>
+			<pattern>%d{yyyyMMdd HH:mm:ss.SSS} [%thread] %-3level %logger{5} -
+				%msg %n</pattern>
+		</encoder>
+	</appender>
+
+	<logger name="jdbc" level="OFF" />
+
+	<logger name="jdbc.sqlonly" level="DEBUG" />
+	<logger name="jdbc.sqltiming" level="OFF" />
+	<logger name="jdbc.audit" level="OFF" />
+	<logger name="jdbc.resultset" level="OFF" />
+	<logger name="jdbc.resultsettable" level="DEBUG" />
+	<logger name="jdbc.connection" level="OFF" />
+
+	<root level="INFO">
+		<appender-ref ref="STDOUT" />
+	</root>
+</configuration>

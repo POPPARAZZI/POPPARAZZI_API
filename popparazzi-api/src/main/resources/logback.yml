@@ -1,0 +1,4 @@
+log:
+  config:
+    path: ../logs
+    filename: popparazzi_api_log
