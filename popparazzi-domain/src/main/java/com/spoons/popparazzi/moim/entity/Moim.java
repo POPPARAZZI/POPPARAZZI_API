@@ -22,7 +22,7 @@ import java.time.Instant;
 public class Moim {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "MM_CODE", length = 22, nullable = false)
     private String MM_CODE;
 
 }

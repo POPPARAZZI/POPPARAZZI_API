@@ -38,9 +38,9 @@ spring:
       on-profile: dev
   datasource:
     driver-class-name: net.sf.log4jdbc.sql.jdbcapi.DriverSpy
-    url:
-    username:
-    password:
+    url: jdbc:log4jdbc:postgresql://aws-1-ap-northeast-2.pooler.supabase.com:5432/postgres?sslmode=require
+    username: postgres.vjeftabbisgxwapfikgi
+    password: "!tmvnswm123"
 
   jpa:
     database: postgresql

@@ -13,7 +13,7 @@ import lombok.Setter;
 public class Seq {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name="TSM_NAME", length = 6, nullable = false)
     private String TSM_NAME;
 
     private int TSM_NO;
