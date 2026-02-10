@@ -21,7 +21,7 @@ public class SeqServiceImpl implements SeqService{
 
         if (vo instanceof Moim) {
             String code = seqRepository.getUniqueCode("MOIM", "MM");
-            ((Moim) vo).setMM_CODE(code);
+            ((Moim) vo).setMmCode(code);
         }
 
         return vo;
