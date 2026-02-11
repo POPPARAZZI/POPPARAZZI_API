@@ -3,6 +3,8 @@ package com.spoons.popparazzi.error.code;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
+import java.util.HashMap;
+
 /**
  * 공통 에러 코드
  *

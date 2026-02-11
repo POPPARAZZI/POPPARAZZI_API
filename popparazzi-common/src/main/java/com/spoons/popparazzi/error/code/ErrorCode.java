@@ -1,5 +1,7 @@
 package com.spoons.popparazzi.error.code;
 
+import java.util.HashMap;
+
 /**
  * 에러 코드 인터페이스
  *
@@ -21,4 +23,5 @@ public interface ErrorCode {
     int getCode();
     String getMessage();
     String getType();
+
 }

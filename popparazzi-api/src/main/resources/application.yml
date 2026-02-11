@@ -18,9 +18,21 @@ spring:
 logging:
   config: classpath:logback-spring.xml
   level:
-    com.zaxxer.hikari: INFO  # HikariCP 관련 로그 레벨 설정
-    com.zaxxer.hikari.HikariConfig: ERROR  # HikariConfig 관련 로그 레벨 설정
-springfox:
-  documentation:
-    swagger-ui:
-      enabled: off
+    root: INFO
+    com.spoons.popparazzi: DEBUG  # 본인 코드는 상세히
+
+    # SQL 로그만 보고 싶다면
+    jdbc.sqlonly: DEBUG  # SQL만
+    jdbc.resultsettable: DEBUG  # 결과도
+
+    # 나머지는 조용히
+    org.springframework: WARN
+    org.apache: WARN
+    com.zaxxer.hikari: ERROR
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
