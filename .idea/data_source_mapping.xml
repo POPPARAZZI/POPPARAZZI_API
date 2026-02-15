@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="DataSourcePerFileMappings">
+    <file url="file://$APPLICATION_CONFIG_DIR$/consoles/db/d7f00ad1-8cd6-4dff-9b84-a86ef0bd20f0/console_10.sql" value="d7f00ad1-8cd6-4dff-9b84-a86ef0bd20f0" />
+    <file url="file://$APPLICATION_CONFIG_DIR$/consoles/db/d7f00ad1-8cd6-4dff-9b84-a86ef0bd20f0/console_11.sql" value="d7f00ad1-8cd6-4dff-9b84-a86ef0bd20f0" />
+    <file url="file://$APPLICATION_CONFIG_DIR$/consoles/db/d7f00ad1-8cd6-4dff-9b84-a86ef0bd20f0/console_5.sql" value="d7f00ad1-8cd6-4dff-9b84-a86ef0bd20f0" />
+    <file url="file://$APPLICATION_CONFIG_DIR$/consoles/db/d7f00ad1-8cd6-4dff-9b84-a86ef0bd20f0/console_7.sql" value="d7f00ad1-8cd6-4dff-9b84-a86ef0bd20f0" />
+    <file url="file://$APPLICATION_CONFIG_DIR$/consoles/db/d7f00ad1-8cd6-4dff-9b84-a86ef0bd20f0/console_8.sql" value="d7f00ad1-8cd6-4dff-9b84-a86ef0bd20f0" />
+    <file url="file://$APPLICATION_CONFIG_DIR$/consoles/db/d7f00ad1-8cd6-4dff-9b84-a86ef0bd20f0/console_9.sql" value="d7f00ad1-8cd6-4dff-9b84-a86ef0bd20f0" />
+    <file url="das://d7f00ad1-8cd6-4dff-9b84-a86ef0bd20f0/database/postgres/schema/public/table/tbl_like_mapping.sql" value="d7f00ad1-8cd6-4dff-9b84-a86ef0bd20f0" />
+  </component>
+</project>
