@@ -9,11 +9,11 @@ import java.time.LocalDateTime;
 @Getter
 @Entity
 @Table(
-        name = "TBL_LIKE_MAPPING",
+        name = "tbl_like_mapping",
         uniqueConstraints = {
                 @UniqueConstraint(
-                        name = "UK_TBL_LIKE_MAPPING",
-                        columnNames = {"LM_TMM_CODE", "LM_PMM_CODE", "LM_TYPE"}
+                        name = "uk_tbl_like_mapping",
+                        columnNames = {"lm_tmm_code", "lm_pmm_code", "lm_type"}
                 )
         }
 )
@@ -22,19 +22,20 @@ public class LikeMapping {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "LM_SEQ")
+    @Column(name = "lm_seq")
     private Long id;
 
-    @Column(name = "LM_TMM_CODE", nullable = false, length = 22)
+    @Column(name = "lm_tmm_code", nullable = false, length = 22)
     private String memberCode;
 
-    @Column(name = "LM_PMM_CODE", nullable = false, length = 22)
+    @Column(name = "lm_pmm_code", nullable = false, length = 22)
     private String targetCode;
 
-    @Column(name = "LM_TYPE", nullable = false, length = 2)
+    @Convert(converter = LikeTypeConverter.class)
+    @Column(name = "lm_type", nullable = false, length = 1)
     private LikeType type;
 
-    @Column(name = "LM_REG_DT", nullable = false)
+    @Column(name = "lm_reg_dt", nullable = false)
     private LocalDateTime createdAt;
 
     public LikeMapping(String memberCode, String targetCode, LikeType type) {

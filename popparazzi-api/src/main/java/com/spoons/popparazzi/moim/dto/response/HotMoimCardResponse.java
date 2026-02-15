@@ -3,7 +3,7 @@ package com.spoons.popparazzi.moim.dto.response;
 import java.time.LocalDateTime;
 
 public record HotMoimCardResponse(
-        String mmCode,
+        String moimCode,
         String title,
         LocalDateTime date,
         int currentParticipants,

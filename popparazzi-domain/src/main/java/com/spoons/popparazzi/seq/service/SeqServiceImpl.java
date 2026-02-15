@@ -1,7 +1,6 @@
 package com.spoons.popparazzi.seq.service;
 
 import com.spoons.popparazzi.moim.entity.Moim;
-import com.spoons.popparazzi.seq.entity.Seq;
 import com.spoons.popparazzi.seq.repository.SeqRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +20,7 @@ public class SeqServiceImpl implements SeqService{
 
         if (vo instanceof Moim) {
             String code = seqRepository.getUniqueCode("MOIM", "MM");
-            ((Moim) vo).setMmCode(code);
+            ((Moim) vo).setMoimCode(code);
         }
 
         return vo;

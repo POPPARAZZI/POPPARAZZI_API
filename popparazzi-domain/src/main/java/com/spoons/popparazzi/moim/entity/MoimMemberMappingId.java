@@ -13,9 +13,9 @@ import java.io.Serializable;
 @Embeddable
 public class MoimMemberMappingId implements Serializable {
 
-        @Column(name = "MP_MM_CODE", length = 22, nullable = false)
-        private String mmCode;
+        @Column(name = "mp_mm_code", length = 22, nullable = false)
+        private String moimCode;
 
-        @Column(name = "MP_TMM_CODE", length = 22, nullable = false)
-        private String tmmCode;
+        @Column(name = "mp_tmm_code", length = 22, nullable = false)
+        private String memberCode;
 }

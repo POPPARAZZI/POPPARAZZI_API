@@ -3,8 +3,8 @@ package com.spoons.popparazzi.moim.dto.query;
 import java.time.LocalDateTime;
 
 public record HotMoimCardQuery(
-        String mmCode,
-        String pmCode,
+        String moimCode,
+        String popupCode,
         String title,
         LocalDateTime date,
         int currentParticipants,

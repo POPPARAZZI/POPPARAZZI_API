@@ -1,7 +1,7 @@
 server:
   port: 8080
   servlet:
-    context-path: /api/v1
+    context-path: /api
     encoding:
       charset: UTF-8
       enabled: true
@@ -15,21 +15,19 @@ logging:
     root: DEBUG
 
 Spring:
-# jwt secret key 설정
+  # jwt secret key 설정
   jwt:
-    secret:
+    secret: nLTft3rpggbZvFSiSMN7wYyvmW7pApWpNAQsdl0WUtg=
     tokenExpiry: 3600000
-    refreshSecret:
+    refreshSecret: C3insT0E5lSEJghgU4hfBEUhzcseBNQt/RJtT2LOKY4=
     refreshTokenExpiry: 1209600000
 
 # 암호화
 encryption:
   keys:
-    login:
-    signup:
+    signup: CSZaYqBII09U1AHa3HXvKXzXkyEZmDlmin7j+iQjwYE=
   ivs:
-    login:
-    signup:
+    signup: HJjyL305R6D4FOLSwojlMg==
 
 # postgresql
 spring:
@@ -38,15 +36,22 @@ spring:
       on-profile: dev
   datasource:
     driver-class-name: net.sf.log4jdbc.sql.jdbcapi.DriverSpy
-    url: jdbc:log4jdbc:postgresql://aws-1-ap-northeast-2.pooler.supabase.com:5432/postgres?sslmode=require
+    url: jdbc:log4jdbc:postgresql://aws-1-ap-northeast-2.pooler.supabase.com:6543/postgres
     username: postgres.vjeftabbisgxwapfikgi
-    password: "!tmvnswm123"
+    password: '!tmvnswm123'
+    hikari:
+      maximum-pool-size: 10         # Transaction 모드는 더 많이 허용
+      minimum-idle: 2
+      connection-timeout: 20000
+      idle-timeout: 300000
+      max-lifetime: 1200000
+      leak-detection-threshold: 60000
 
   jpa:
     database: postgresql
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
@@ -55,9 +60,3 @@ spring:
         use_sql_comments: true
         jdbc:
           time_zone: Asia/Seoul
-
-
-
-
-
-

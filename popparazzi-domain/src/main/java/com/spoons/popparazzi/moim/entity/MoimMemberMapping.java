@@ -9,7 +9,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "TBL_MOIM_MEMBER_MAPPING")
+@Table(name = "tbl_moim_member_mapping")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class MoimMemberMapping {
@@ -17,10 +17,10 @@ public class MoimMemberMapping {
     @EmbeddedId
     private MoimMemberMappingId id;
 
-    @Column(name = "MP_IS_APPROVED", nullable = false)
+    @Column(name = "mp_is_approved", nullable = false)
     private boolean isApproved;
 
-    @Column(name = "MP_JOIN_YN", nullable = false, length = 1)
+    @Column(name = "mp_join_yn", length = 1, nullable = false, columnDefinition = "char(1)")
     private String joinYn;
 
     public MoimMemberMapping(String mmCode, String tmmCode) {

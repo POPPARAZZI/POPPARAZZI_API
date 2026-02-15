@@ -8,25 +8,26 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "TBL_FILE_MASTER")
+@Table(name = "tbl_file_master")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class FileMaster {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "FM_SEQ")
+    @Column(name = "fm_seq")
     private Long fmSeq;
 
-    @Column(name = "FM_PARENT_CODE", length = 22, nullable = false)
+    @Column(name = "fm_parent_code", length = 22, nullable = false)
     private String parentCode;
 
-    @Column(name = "FM_URL", length = 255, nullable = false)
+    @Column(name = "fm_url", length = 255, nullable = false)
     private String url;
 
-    @Column(name = "FM_TYPE", nullable = false)
-    private FileType type;
+    @Convert(converter = FileTypeConverter.class)
+    @Column(name="fm_type", nullable=false, length=1)
+    private FileType fmType;
 
-    @Column(name = "FM_REG_DT", nullable = false)
+    @Column(name = "fm_reg_dt", nullable = false)
     private LocalDateTime regDt;
 }

@@ -3,7 +3,7 @@ package com.spoons.popparazzi.file.entity;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 
-@Converter(autoApply = true)
+@Converter(autoApply = false)
 public class FileTypeConverter implements AttributeConverter<FileType, String> {
 
     @Override
