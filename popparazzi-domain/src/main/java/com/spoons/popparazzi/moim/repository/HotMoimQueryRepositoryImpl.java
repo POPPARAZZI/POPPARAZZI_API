@@ -3,9 +3,10 @@ package com.spoons.popparazzi.moim.repository;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.spoons.popparazzi.like.entity.LikeType;
-import com.spoons.popparazzi.moim.dto.query.HotMoimCardQuery;
+import com.spoons.popparazzi.like.enums.LikeType;
+import com.spoons.popparazzi.moim.dto.result.HotMoimCardResult;
 import com.spoons.popparazzi.moim.dto.query.HotMoimRankQuery;
+import com.spoons.popparazzi.common.YesNo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
@@ -54,18 +55,18 @@ public class HotMoimQueryRepositoryImpl implements HotMoimQueryRepository {
      * 핫한 모임 카드 베이스(참여자수, 기본정보) 조립
      */
     @Override
-    public List<HotMoimCardQuery> findHotCardsBase(List<String> mmCodes) {
+    public List<HotMoimCardResult> findHotCardsBase(List<String> mmCodes) {
         if (mmCodes == null || mmCodes.isEmpty()) return List.of();
 
         var joinedCount = new CaseBuilder()
-                .when(moimMemberMapping.joinYn.eq("Y")).then(1)
+                .when(moimMemberMapping.joinYn.eq(YesNo.YES)).then(1)
                 .otherwise(0)
                 .sum()
                 .intValue(); // Integer expression으로 변환
 
         return queryFactory
                 .select(Projections.constructor(
-                        HotMoimCardQuery.class,
+                        HotMoimCardResult.class,
                         moim.moimCode,
                         moim.popupCode,
                         moim.title,
@@ -80,7 +81,7 @@ public class HotMoimQueryRepositoryImpl implements HotMoimQueryRepository {
                 .on(moimMemberMapping.id.moimCode.eq(moim.moimCode))
                 .where(
                         moim.moimCode.in(mmCodes),
-                        moim.deleteYn.eq("N")
+                        moim.deleteYn.eq(YesNo.NO)
                 )
                 .groupBy(
                         moim.moimCode,

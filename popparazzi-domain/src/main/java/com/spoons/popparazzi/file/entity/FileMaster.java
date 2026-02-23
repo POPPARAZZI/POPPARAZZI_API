@@ -1,5 +1,6 @@
 package com.spoons.popparazzi.file.entity;
 
+import com.spoons.popparazzi.file.enums.FileType;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -24,7 +25,7 @@ public class FileMaster {
     @Column(name = "fm_url", length = 255, nullable = false)
     private String url;
 
-    @Convert(converter = FileTypeConverter.class)
+    @Enumerated(EnumType.STRING)
     @Column(name="fm_type", nullable=false, length=1)
     private FileType fmType;
 

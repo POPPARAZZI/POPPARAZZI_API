@@ -1,7 +1,7 @@
 package com.spoons.popparazzi.like.repository;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.spoons.popparazzi.like.entity.LikeType;
+import com.spoons.popparazzi.like.enums.LikeType;
 import com.spoons.popparazzi.like.entity.QLikeMapping;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;

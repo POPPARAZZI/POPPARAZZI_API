@@ -1,5 +1,6 @@
 package com.spoons.popparazzi.moim.entity;
 
+import com.spoons.popparazzi.common.YesNo;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -46,8 +47,8 @@ public class Moim {
     @Column(name = "mm_reg_dt", nullable = false)
     private LocalDateTime regDt;
 
-    @Column(name = "mm_delete_yn", length = 1, nullable = false, columnDefinition = "char(1)")
-    private String deleteYn;
+    @Column(name = "mm_delete_yn", length = 1, nullable = false)
+    private YesNo deleteYn;
 
     @Column(name = "mm_delete_dt")
     private LocalDateTime deleteDt;

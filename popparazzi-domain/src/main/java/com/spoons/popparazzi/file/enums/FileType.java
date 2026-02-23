@@ -1,4 +1,4 @@
-package com.spoons.popparazzi.file.entity;
+package com.spoons.popparazzi.file.enums;
 
 public enum FileType {
     P,  //팝업

@@ -1,9 +1,9 @@
-package com.spoons.popparazzi.moim.dto.query;
+package com.spoons.popparazzi.moim.dto.result;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
-public record NewestMoimCardQuery(
+public record NewestMoimCardResult(
         String moimCode,
         String popupCode,
         String title,

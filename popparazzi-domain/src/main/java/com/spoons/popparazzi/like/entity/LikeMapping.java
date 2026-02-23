@@ -1,5 +1,6 @@
 package com.spoons.popparazzi.like.entity;
 
+import com.spoons.popparazzi.like.enums.LikeType;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -31,7 +32,7 @@ public class LikeMapping {
     @Column(name = "lm_pmm_code", nullable = false, length = 22)
     private String targetCode;
 
-    @Convert(converter = LikeTypeConverter.class)
+    @Enumerated(EnumType.STRING)
     @Column(name = "lm_type", nullable = false, length = 1)
     private LikeType type;
 

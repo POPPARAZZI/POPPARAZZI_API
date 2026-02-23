@@ -27,6 +27,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/moim/**").permitAll()
                         .requestMatchers("/likes/**").permitAll()
+                        .requestMatchers("board/**").permitAll()
                         .requestMatchers("/test/**").permitAll()
                         .anyRequest().authenticated()
                 )

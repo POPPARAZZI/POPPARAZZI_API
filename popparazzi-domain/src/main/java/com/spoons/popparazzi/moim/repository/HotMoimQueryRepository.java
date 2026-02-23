@@ -1,7 +1,7 @@
 package com.spoons.popparazzi.moim.repository;
 
-import com.spoons.popparazzi.like.entity.LikeType;
-import com.spoons.popparazzi.moim.dto.query.HotMoimCardQuery;
+import com.spoons.popparazzi.like.enums.LikeType;
+import com.spoons.popparazzi.moim.dto.result.HotMoimCardResult;
 import com.spoons.popparazzi.moim.dto.query.HotMoimRankQuery;
 import org.springframework.data.domain.Pageable;
 
@@ -17,5 +17,5 @@ public interface HotMoimQueryRepository {
     List<HotMoimRankQuery> findHotRankKeys(LikeType type, LocalDateTime since, Pageable pageable);
 
     /* 핫한 모임 카드 */
-    List<HotMoimCardQuery> findHotCardsBase(List<String> mmCodes);
+    List<HotMoimCardResult> findHotCardsBase(List<String> mmCodes);
 }

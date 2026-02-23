@@ -4,14 +4,14 @@ import com.spoons.popparazzi.category.dto.query.MoimCategoryRow;
 import com.spoons.popparazzi.category.repository.CategoryQueryRepository;
 import com.spoons.popparazzi.error.exception.BusinessException;
 import com.spoons.popparazzi.file.dto.query.FileThumbQuery;
-import com.spoons.popparazzi.file.entity.FileType;
+import com.spoons.popparazzi.file.enums.FileType;
 import com.spoons.popparazzi.file.repository.FileThumbQueryRepository;
-import com.spoons.popparazzi.like.entity.LikeType;
+import com.spoons.popparazzi.like.enums.LikeType;
 import com.spoons.popparazzi.like.repository.LikeQueryRepository;
 import com.spoons.popparazzi.moim.dto.command.CreateMoimCommand;
-import com.spoons.popparazzi.moim.dto.query.HotMoimCardQuery;
+import com.spoons.popparazzi.moim.dto.result.HotMoimCardResult;
 import com.spoons.popparazzi.moim.dto.query.HotMoimRankQuery;
-import com.spoons.popparazzi.moim.dto.query.NewestMoimCardQuery;
+import com.spoons.popparazzi.moim.dto.result.NewestMoimCardResult;
 import com.spoons.popparazzi.moim.dto.query.NewestMoimItemQuery;
 import com.spoons.popparazzi.moim.error.MoimErrorCode;
 import com.spoons.popparazzi.moim.repository.HotMoimQueryRepository;
@@ -55,7 +55,7 @@ public class MoimServiceImpl implements MoimService {
 
     // 신규 모임 카드
     @Override
-    public List<NewestMoimCardQuery> getNewestMoimsForMain(int limit, String memberCode) {
+    public List<NewestMoimCardResult> getNewestMoimsForMain(int limit, String memberCode) {
 
         if (limit <= 0) limit = 3;
         if (limit > 50) limit = 50;
@@ -109,7 +109,7 @@ public class MoimServiceImpl implements MoimService {
                                     .limit(3)
                                     .toList();
 
-                    return new NewestMoimCardQuery(
+                    return new NewestMoimCardResult(
                             it.moimCode(),
                             it.popupCode(),
                             it.title(),
@@ -138,7 +138,7 @@ public class MoimServiceImpl implements MoimService {
 
     // 핫한 모임 조회
     @Override
-    public List<HotMoimCardQuery> getHotMoimCardsForMain(int limit) {
+    public List<HotMoimCardResult> getHotMoimCardsForMain(int limit) {
         LocalDateTime since = LocalDateTime.now().minusHours(24);
 
         // 1) 랭크 TopN
@@ -154,7 +154,7 @@ public class MoimServiceImpl implements MoimService {
         // 2) 카드 기본 정보
         var bases = hotMoimQueryRepository.findHotCardsBase(mmCodes);
         var baseMap = bases.stream().collect(java.util.stream.Collectors.toMap(
-                HotMoimCardQuery::moimCode,
+                HotMoimCardResult::moimCode,
                 it -> it
         ));
 
@@ -168,7 +168,7 @@ public class MoimServiceImpl implements MoimService {
         // 4) 모임썸네일 없는 경우 팝업 썸네일 fallback 준비
         var needPopupPmCodes = bases.stream()
                 .filter(b -> !moimThumbMap.containsKey(b.moimCode()))
-                .map(HotMoimCardQuery::popupCode)
+                .map(HotMoimCardResult::popupCode)
                 .distinct()
                 .toList();
 
@@ -189,7 +189,7 @@ public class MoimServiceImpl implements MoimService {
                     var thumb = moimThumbMap.get(b.moimCode());
                     if (thumb == null) thumb = popupThumbMap.get(b.popupCode());
 
-                    return new HotMoimCardQuery(
+                    return new HotMoimCardResult(
                             b.moimCode(),
                             b.popupCode(),
                             b.title(),

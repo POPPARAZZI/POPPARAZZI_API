@@ -1,4 +1,4 @@
-package com.spoons.popparazzi.like.entity;
+package com.spoons.popparazzi.like.enums;
 
 public enum LikeType {
     M,  //모임

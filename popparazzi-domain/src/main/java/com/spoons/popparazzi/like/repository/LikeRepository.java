@@ -1,7 +1,7 @@
 package com.spoons.popparazzi.like.repository;
 
 import com.spoons.popparazzi.like.entity.LikeMapping;
-import com.spoons.popparazzi.like.entity.LikeType;
+import com.spoons.popparazzi.like.enums.LikeType;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

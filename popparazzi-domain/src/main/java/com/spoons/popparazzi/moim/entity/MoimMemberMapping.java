@@ -1,9 +1,7 @@
 package com.spoons.popparazzi.moim.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.EmbeddedId;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
+import com.spoons.popparazzi.common.YesNo;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -20,16 +18,16 @@ public class MoimMemberMapping {
     @Column(name = "mp_is_approved", nullable = false)
     private boolean isApproved;
 
-    @Column(name = "mp_join_yn", length = 1, nullable = false, columnDefinition = "char(1)")
-    private String joinYn;
+    @Column(name = "mp_join_yn", length = 1, nullable = false)
+    private YesNo joinYn;
 
     public MoimMemberMapping(String mmCode, String tmmCode) {
         this.id = new MoimMemberMappingId(mmCode, tmmCode);
         this.isApproved = false;
-        this.joinYn = "Y";
+        this.joinYn = YesNo.YES;
     }
 
     public boolean isJoined() {
-        return "Y".equalsIgnoreCase(this.joinYn);
+        return this.joinYn != null && this.joinYn.isYes();
     }
 }
