@@ -1,11 +1,11 @@
-package com.spoons.popparazzi.moim.repository;
+package com.spoons.popparazzi.moim.repository.hot;
 
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.spoons.popparazzi.like.enums.LikeType;
 import com.spoons.popparazzi.moim.dto.result.HotMoimCardResult;
-import com.spoons.popparazzi.moim.dto.query.HotMoimRankQuery;
+import com.spoons.popparazzi.moim.dto.query.hot.HotMoimRankQuery;
 import com.spoons.popparazzi.common.YesNo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;

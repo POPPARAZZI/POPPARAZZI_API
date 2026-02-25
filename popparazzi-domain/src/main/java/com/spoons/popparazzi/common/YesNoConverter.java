@@ -1,6 +1,5 @@
 package com.spoons.popparazzi.common;
 
-import com.spoons.popparazzi.common.YesNo;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 

@@ -1,6 +1,7 @@
 package com.spoons.popparazzi.moim.entity;
 
 import com.spoons.popparazzi.common.YesNo;
+import com.spoons.popparazzi.popup.entity.Popup;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -25,6 +26,16 @@ public class Moim {
 
     @Column(name = "mm_pm_code", length = 22, nullable = false)
     private String popupCode;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "mm_pm_code",
+            referencedColumnName = "pm_code",
+            insertable = false,
+            updatable = false
+    )
+    private Popup popup;
+
 
     @Column(name = "mm_tmm_code", length = 22, nullable = false)
     private String leaderMemberCode;

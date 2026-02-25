@@ -1,8 +1,8 @@
-package com.spoons.popparazzi.moim.repository;
+package com.spoons.popparazzi.moim.repository.hot;
 
 import com.spoons.popparazzi.like.enums.LikeType;
 import com.spoons.popparazzi.moim.dto.result.HotMoimCardResult;
-import com.spoons.popparazzi.moim.dto.query.HotMoimRankQuery;
+import com.spoons.popparazzi.moim.dto.query.hot.HotMoimRankQuery;
 import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDateTime;

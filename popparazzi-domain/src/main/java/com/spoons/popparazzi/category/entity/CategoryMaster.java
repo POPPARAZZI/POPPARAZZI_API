@@ -1,5 +1,6 @@
 package com.spoons.popparazzi.category.entity;
 
+import com.spoons.popparazzi.category.enums.CategoryType;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -17,6 +18,7 @@ public class CategoryMaster {
     @Column(name = "tcm_name", nullable = false)
     private String name;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "tcm_type", length = 1, nullable = false)
-    private String type; // 'M' or 'P'
+    private CategoryType type;
 }

@@ -5,6 +5,7 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.spoons.popparazzi.category.dto.query.MoimCategoryRow;
 import com.spoons.popparazzi.category.entity.QCategoryMapping;
 import com.spoons.popparazzi.category.entity.QCategoryMaster;
+import com.spoons.popparazzi.category.enums.CategoryType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -35,7 +36,7 @@ public class CategoryQueryRepositoryImpl implements CategoryQueryRepository {
                 .on(mapping.categoryCode.eq(master.code))
                 .where(
                         mapping.parentCode.in(parentCodes),
-                        master.type.eq("M")
+                        master.type.eq(CategoryType.M)
                 )
                 .fetch();
     }

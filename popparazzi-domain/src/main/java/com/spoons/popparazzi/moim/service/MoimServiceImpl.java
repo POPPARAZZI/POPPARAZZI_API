@@ -3,20 +3,22 @@ package com.spoons.popparazzi.moim.service;
 import com.spoons.popparazzi.category.dto.query.MoimCategoryRow;
 import com.spoons.popparazzi.category.repository.CategoryQueryRepository;
 import com.spoons.popparazzi.error.exception.BusinessException;
-import com.spoons.popparazzi.file.dto.query.FileThumbQuery;
-import com.spoons.popparazzi.file.enums.FileType;
-import com.spoons.popparazzi.file.repository.FileThumbQueryRepository;
+import com.spoons.popparazzi.file.dto.query.MoimThumbTarget;
+import com.spoons.popparazzi.file.service.FileThumbnailService;
 import com.spoons.popparazzi.like.enums.LikeType;
 import com.spoons.popparazzi.like.repository.LikeQueryRepository;
 import com.spoons.popparazzi.moim.dto.command.CreateMoimCommand;
+import com.spoons.popparazzi.moim.dto.query.hot.HotMoimRankQuery;
+import com.spoons.popparazzi.moim.dto.query.newest.NewestMoimItemQuery;
+import com.spoons.popparazzi.moim.dto.query.recommend.*;
 import com.spoons.popparazzi.moim.dto.result.HotMoimCardResult;
-import com.spoons.popparazzi.moim.dto.query.HotMoimRankQuery;
+import com.spoons.popparazzi.moim.dto.result.MoimRecommendCardResult;
 import com.spoons.popparazzi.moim.dto.result.NewestMoimCardResult;
-import com.spoons.popparazzi.moim.dto.query.NewestMoimItemQuery;
 import com.spoons.popparazzi.moim.error.MoimErrorCode;
-import com.spoons.popparazzi.moim.repository.HotMoimQueryRepository;
-import com.spoons.popparazzi.moim.repository.MoimQueryRepository;
 import com.spoons.popparazzi.moim.repository.MoimRepository;
+import com.spoons.popparazzi.moim.repository.hot.HotMoimQueryRepository;
+import com.spoons.popparazzi.moim.repository.newest.MoimQueryRepository;
+import com.spoons.popparazzi.moim.repository.recommend.MoimRecommendQueryRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -24,9 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -37,12 +37,13 @@ public class MoimServiceImpl implements MoimService {
 
     private final MoimRepository moimRepository;
     private final MoimQueryRepository moimQueryRepository;
-
     private final HotMoimQueryRepository hotMoimQueryRepository;
-    private final FileThumbQueryRepository fileThumbQueryRepository;
-
+    private final MoimRecommendQueryRepository recommendQueryRepository;
     private final LikeQueryRepository likeQueryRepository;
     private final CategoryQueryRepository categoryQueryRepository;
+
+    // ✅ 썸네일 공통 서비스로 통일
+    private final FileThumbnailService fileThumbnailService;
 
     @Override
     public Long create(CreateMoimCommand command) {
@@ -61,11 +62,9 @@ public class MoimServiceImpl implements MoimService {
         if (limit > 50) limit = 50;
 
         var items = moimQueryRepository.findNewestForMain(PageRequest.of(0, limit));
-
         if (items.isEmpty()) return List.of();
 
         var moimCodes = items.stream().map(NewestMoimItemQuery::moimCode).toList();
-        var popupCodes = items.stream().map(NewestMoimItemQuery::popupCode).toList();
 
         // 1️⃣ 좋아요
         var likedSet = new HashSet<>(
@@ -85,23 +84,18 @@ public class MoimServiceImpl implements MoimService {
                                 )
                         ));
 
-        // 3️⃣ 썸네일 (모임 → 없으면 팝업)
-        var moimThumbs = fileThumbQueryRepository.findFirstThumbs(FileType.M, moimCodes)
-                .stream()
-                .collect(Collectors.toMap(FileThumbQuery::parentCode, FileThumbQuery::url));
+        // 3️⃣ 썸네일 (모임 → 없으면 팝업) ✅ 공통 서비스 사용
+        List<MoimThumbTarget> targets = items.stream()
+                .map(it -> new MoimThumbTarget(it.moimCode(), it.popupCode()))
+                .toList();
 
-        var popupThumbs = fileThumbQueryRepository.findFirstThumbs(FileType.P, popupCodes)
-                .stream()
-                .collect(Collectors.toMap(FileThumbQuery::parentCode, FileThumbQuery::url));
+        Map<String, String> thumbMap = fileThumbnailService.getMoimThumbsWithPopupFallback(targets);
 
         // 4️⃣ 카드 조합
         return items.stream()
                 .map(it -> {
 
-                    String thumb = moimThumbs.getOrDefault(
-                            it.moimCode(),
-                            popupThumbs.get(it.popupCode())
-                    );
+                    String thumb = thumbMap.get(it.moimCode());
 
                     List<String> categories =
                             categoryMap.getOrDefault(it.moimCode(), List.of())
@@ -153,41 +147,25 @@ public class MoimServiceImpl implements MoimService {
 
         // 2) 카드 기본 정보
         var bases = hotMoimQueryRepository.findHotCardsBase(mmCodes);
-        var baseMap = bases.stream().collect(java.util.stream.Collectors.toMap(
+        var baseMap = bases.stream().collect(Collectors.toMap(
                 HotMoimCardResult::moimCode,
                 it -> it
         ));
 
-        // 3) 모임 썸네일 우선
-        var moimThumbMap = fileThumbQueryRepository.findFirstThumbs(FileType.M, mmCodes).stream()
-                .collect(java.util.stream.Collectors.toMap(
-                        FileThumbQuery::parentCode,
-                        FileThumbQuery::url
-                ));
-
-        // 4) 모임썸네일 없는 경우 팝업 썸네일 fallback 준비
-        var needPopupPmCodes = bases.stream()
-                .filter(b -> !moimThumbMap.containsKey(b.moimCode()))
-                .map(HotMoimCardResult::popupCode)
-                .distinct()
+        // 3) 썸네일 (모임 → 없으면 팝업) ✅ 공통 서비스 사용
+        List<MoimThumbTarget> targets = bases.stream()
+                .map(b -> new MoimThumbTarget(b.moimCode(), b.popupCode()))
                 .toList();
 
-        java.util.Map<String, String> popupThumbMap = new java.util.HashMap<>();
-        if (!needPopupPmCodes.isEmpty()) {
-            var popupThumbs = fileThumbQueryRepository.findFirstThumbs(FileType.P, needPopupPmCodes);
-            for (var t : popupThumbs) {
-                popupThumbMap.put(t.parentCode(), t.url());
-            }
-        }
+        Map<String, String> thumbMap = fileThumbnailService.getMoimThumbsWithPopupFallback(targets);
 
-        // 5) 랭크 순서 유지해서 최종 조립 (likeCount는 r에서 바로 씀)
+        // 4) 랭크 순서 유지해서 최종 조립 (likeCount는 r에서 바로 씀)
         return ranks.stream()
                 .map(r -> {
                     var b = baseMap.get(r.moimCode());
                     if (b == null) return null;
 
-                    var thumb = moimThumbMap.get(b.moimCode());
-                    if (thumb == null) thumb = popupThumbMap.get(b.popupCode());
+                    var thumb = thumbMap.get(b.moimCode());
 
                     return new HotMoimCardResult(
                             b.moimCode(),
@@ -200,8 +178,201 @@ public class MoimServiceImpl implements MoimService {
                             r.likeCount24h()
                     );
                 })
-                .filter(java.util.Objects::nonNull)
+                .filter(Objects::nonNull)
                 .toList();
     }
 
+    // 즐겨찾기 기반 모임 조회
+    @Override
+    public List<MoimRecommendCardResult> recommendForMember(String memberCode) {
+
+        // 1️⃣ 선호 지역 Top3
+        List<PreferredSigunguQuery> preferredSigungu =
+                recommendQueryRepository.findPreferredSigunguTop(memberCode, 30, 3);
+
+        List<String> sigunguPriority = preferredSigungu.stream()
+                .map(PreferredSigunguQuery::sigungu)
+                .toList();
+
+        // 2️⃣ 1차 후보 모임 조회
+        List<RecommendedMoimBaseQuery> candidates = sigunguPriority.isEmpty()
+                ? List.of()
+                : recommendQueryRepository.findRecommendMoimCandidates(sigunguPriority, memberCode, 20);
+
+        // 후보가 아예 없으면 최신 fallback
+        if (candidates.isEmpty()) {
+            return buildLatestFallback(memberCode);
+        }
+
+        // 3️⃣ 유저 선호 카테고리 TopN
+        List<PreferredCategoryQuery> preferredCategories =
+                recommendQueryRepository.findPreferredCategories(memberCode, 30, 5);
+
+        Set<String> preferredCategorySet = preferredCategories.stream()
+                .map(PreferredCategoryQuery::categoryCode)
+                .collect(Collectors.toSet());
+
+        // 4️⃣ 후보 모임 코드 목록
+        List<String> moimCodes = candidates.stream()
+                .map(RecommendedMoimBaseQuery::moimCode)
+                .toList();
+
+        // 5️⃣ 후보 모임 카테고리 조회
+        List<MoimCategoryLinkQuery> moimCategories =
+                recommendQueryRepository.findMoimCategories(moimCodes);
+
+        Map<String, Set<String>> moimCategoryMap = moimCategories.stream()
+                .collect(Collectors.groupingBy(
+                        MoimCategoryLinkQuery::moimCode,
+                        Collectors.mapping(MoimCategoryLinkQuery::categoryCode, Collectors.toSet())
+                ));
+
+        // 6️⃣ 현재 인원 집계
+        List<MoimParticipantsCountQuery> participantCounts =
+                recommendQueryRepository.countApprovedParticipants(moimCodes);
+
+        Map<String, Long> participantCountMap = participantCounts.stream()
+                .collect(Collectors.toMap(
+                        MoimParticipantsCountQuery::moimCode,
+                        MoimParticipantsCountQuery::participantsCount
+                ));
+
+        // 7️⃣ 좋아요 여부 조회
+        Set<String> likedSet = new HashSet<>(
+                likeQueryRepository.findLikedMoimCodes(memberCode, moimCodes)
+        );
+
+        // 8️⃣ 추천 정렬
+        List<RecommendedMoimBaseQuery> sorted = candidates.stream()
+                .sorted((a, b) -> {
+
+                    // 지역 우선순위
+                    int regionScoreA = sigunguPriority.indexOf(a.sigungu());
+                    int regionScoreB = sigunguPriority.indexOf(b.sigungu());
+                    if (regionScoreA != regionScoreB) {
+                        return Integer.compare(regionScoreA, regionScoreB);
+                    }
+
+                    // 카테고리 겹침 점수
+                    int overlapA = calculateOverlap(a.moimCode(), moimCategoryMap, preferredCategorySet);
+                    int overlapB = calculateOverlap(b.moimCode(), moimCategoryMap, preferredCategorySet);
+                    if (overlapA != overlapB) {
+                        return Integer.compare(overlapB, overlapA);
+                    }
+
+                    // 날짜 ASC
+                    int dateCompare = a.date().compareTo(b.date());
+                    if (dateCompare != 0) return dateCompare;
+
+                    // 최신 등록 우선
+                    return b.regDt().compareTo(a.regDt());
+                })
+                .limit(10)
+                .toList();
+
+        // 9️⃣ 썸네일 (모임 → 없으면 팝업) ✅ 공통 서비스 사용
+        List<MoimThumbTarget> targets = sorted.stream()
+                .map(m -> new MoimThumbTarget(m.moimCode(), m.popupCode()))
+                .toList();
+
+        Map<String, String> thumbMap = fileThumbnailService.getMoimThumbsWithPopupFallback(targets);
+
+        // 🔟 최종 카드 반환
+        return sorted.stream()
+                .map(m -> {
+
+                    String thumb = thumbMap.get(m.moimCode());
+
+                    return new MoimRecommendCardResult(
+                            m.moimCode(),
+                            m.title(),
+                            m.date(),
+                            participantCountMap.getOrDefault(m.moimCode(), 0L).intValue(),
+                            m.maxParticipants(),
+                            thumb,
+                            likedSet.contains(m.moimCode())
+                    );
+                })
+                .toList();
+    }
+
+    // fallback
+    private List<MoimRecommendCardResult> buildLatestFallback(String memberCode) {
+
+        var latest = moimQueryRepository.findNewestForMain(PageRequest.of(0, 10));
+        if (latest.isEmpty()) return List.of();
+
+        List<String> moimCodes = latest.stream()
+                .map(NewestMoimItemQuery::moimCode)
+                .toList();
+
+        Set<String> likedSet = new HashSet<>(
+                likeQueryRepository.findLikedMoimCodes(memberCode, moimCodes)
+        );
+
+        // ✅ 썸네일 (모임 → 없으면 팝업) 공통 서비스 사용
+        List<MoimThumbTarget> targets = latest.stream()
+                .map(it -> new MoimThumbTarget(it.moimCode(), it.popupCode()))
+                .toList();
+
+        Map<String, String> thumbMap = fileThumbnailService.getMoimThumbsWithPopupFallback(targets);
+
+        return latest.stream()
+                .map(it -> {
+
+                    String thumb = thumbMap.get(it.moimCode());
+
+                    return new MoimRecommendCardResult(
+                            it.moimCode(),
+                            it.title(),
+                            it.date(),
+                            0,
+                            it.maxParticipants(),
+                            thumb,
+                            likedSet.contains(it.moimCode())
+                    );
+                })
+                .toList();
+    }
+
+    private List<MoimRecommendCardResult> mergeFinal(
+            List<RecommendedMoimBaseQuery> sorted,
+            List<MoimRecommendCardResult> additional,
+            Map<String, Long> participantCountMap,
+            Set<String> likedSet
+    ) {
+
+        List<MoimRecommendCardResult> result = new ArrayList<>();
+
+        for (var m : sorted) {
+            result.add(new MoimRecommendCardResult(
+                    m.moimCode(),
+                    m.title(),
+                    m.date(),
+                    participantCountMap.getOrDefault(m.moimCode(), 0L).intValue(),
+                    m.maxParticipants(),
+                    null,
+                    likedSet.contains(m.moimCode())
+            ));
+        }
+
+        result.addAll(additional);
+        return result;
+    }
+
+    private int calculateOverlap(
+            String moimCode,
+            Map<String, Set<String>> moimCategoryMap,
+            Set<String> preferredCategorySet
+    ) {
+        Set<String> categories = moimCategoryMap.getOrDefault(moimCode, Collections.emptySet());
+
+        int count = 0;
+        for (String category : categories) {
+            if (preferredCategorySet.contains(category)) {
+                count++;
+            }
+        }
+        return count;
+    }
 }

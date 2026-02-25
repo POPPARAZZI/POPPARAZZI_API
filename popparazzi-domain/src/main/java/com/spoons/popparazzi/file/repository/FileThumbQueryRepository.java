@@ -7,9 +7,6 @@ import java.util.List;
 
 public interface FileThumbQueryRepository {
 
-    // 1. 모임 전용
+    // 1. 범용 썸네일 기본 조회
     List<FileThumbQuery> findFirstThumbs(FileType type, List<String> parentCodes);
-
-    // 2. 게시판 전용
-    List<FileThumbQuery> findFirstThumbsForPosts(List<String> parentCodes);
 }

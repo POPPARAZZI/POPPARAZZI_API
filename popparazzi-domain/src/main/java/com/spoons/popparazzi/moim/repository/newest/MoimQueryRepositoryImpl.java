@@ -1,9 +1,9 @@
-package com.spoons.popparazzi.moim.repository;
+package com.spoons.popparazzi.moim.repository.newest;
 
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.spoons.popparazzi.common.YesNo;
-import com.spoons.popparazzi.moim.dto.query.NewestMoimItemQuery;
+import com.spoons.popparazzi.moim.dto.query.newest.NewestMoimItemQuery;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;

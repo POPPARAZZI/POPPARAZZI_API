@@ -4,6 +4,7 @@ import com.spoons.popparazzi.like.service.LikeService;
 import com.spoons.popparazzi.moim.dto.request.CreateMoimRequest;
 import com.spoons.popparazzi.moim.dto.response.HotMoimCardResponse;
 import com.spoons.popparazzi.moim.dto.response.MoimMainResponse;
+import com.spoons.popparazzi.moim.dto.response.MoimRecommendCardResponse;
 import com.spoons.popparazzi.moim.service.MoimService;
 import com.spoons.popparazzi.response.ApiResponse;
 import jakarta.validation.Valid;
@@ -31,7 +32,6 @@ public class MoimController {
         return ResponseEntity.ok(meetingId);
     }
 
-
     // 신규 오픈 모임
     @GetMapping("/main/new")
     public ApiResponse<List<MoimMainResponse>> getNewestMoimsForMain(
@@ -55,7 +55,7 @@ public class MoimController {
         return ApiResponse.success(response);
     }
 
-
+    // 핫한 모임
     @GetMapping("/main/hot")
     public ApiResponse<List<HotMoimCardResponse>> getHotMoimsForMain(
             @RequestParam(defaultValue = "10") int limit
@@ -71,6 +71,28 @@ public class MoimController {
                         it.maxParticipants(),
                         it.thumbnailUrl(),
                         it.likeCount24h()
+                ))
+                .toList();
+
+        return ApiResponse.success(response);
+    }
+
+    // 즐겨찾기 기반 모임 추천
+    @GetMapping("/main/recommend")
+    public ApiResponse<List<MoimRecommendCardResponse>> recommendForMember(
+            @RequestHeader(value = "X-MEMBER-CODE") String memberCode
+    ) {
+        var result = moimService.recommendForMember(memberCode);
+
+        var response = result.stream()
+                .map(it -> new MoimRecommendCardResponse(
+                        it.moimCode(),
+                        it.title(),
+                        it.date(),
+                        it.currentParticipants(),
+                        it.maxParticipants(),
+                        it.thumbnailUrl(),
+                        it.liked()
                 ))
                 .toList();
 

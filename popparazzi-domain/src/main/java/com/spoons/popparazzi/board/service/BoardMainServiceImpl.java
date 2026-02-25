@@ -3,7 +3,9 @@ package com.spoons.popparazzi.board.service;
 import com.spoons.popparazzi.board.dto.query.HotMoimBoardItemQuery;
 import com.spoons.popparazzi.board.dto.result.HotBoardCardResult;
 import com.spoons.popparazzi.board.repository.BoardQueryRepository;
+import com.spoons.popparazzi.config.ImageProperties;
 import com.spoons.popparazzi.file.dto.query.FileThumbQuery;
+import com.spoons.popparazzi.file.enums.FileType;
 import com.spoons.popparazzi.file.repository.FileThumbQueryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -20,7 +22,7 @@ public class BoardMainServiceImpl implements BoardMainService {
 
     private final BoardQueryRepository boardQueryRepository;
     private final FileThumbQueryRepository fileThumbQueryRepository;
-    private final com.spoons.popparazzi.config.ImageProperties imageProperties;
+    private final ImageProperties imageProperties;
 
     @Override
     public List<HotBoardCardResult> getHotMoimBoardsForMain() {
@@ -29,7 +31,7 @@ public class BoardMainServiceImpl implements BoardMainService {
         LocalDateTime to = LocalDateTime.now();
         LocalDateTime from = to.minusDays(7);
 
-        // 2) 좋아요 기준 Top4 조회 (좋아요 0개 포함, 동률 최신순)
+        // 2) 좋아요 기준 Top4 조회 (좋아요 0개 포함 + 동률 최신순)
         List<HotMoimBoardItemQuery> items = boardQueryRepository.findHotMoimBoards(from, to);
         if (items.isEmpty()) {
             return List.of();
@@ -42,11 +44,11 @@ public class BoardMainServiceImpl implements BoardMainService {
                 .distinct()
                 .toList();
 
-        // 4) 썸네일 조회 (없는 게시글도 있을 수 있음)
+        // 4) 썸네일 조회 (없을 수도 있음)
         Map<String, String> thumbMap = Collections.emptyMap();
 
         if (!boardCodes.isEmpty()) {
-            List<FileThumbQuery> thumbs = fileThumbQueryRepository.findFirstThumbsForPosts(boardCodes);
+            List<FileThumbQuery> thumbs = fileThumbQueryRepository.findFirstThumbs(FileType.R, boardCodes);
 
             thumbMap = thumbs.stream()
                     .filter(t -> t.parentCode() != null && t.url() != null)
@@ -57,15 +59,10 @@ public class BoardMainServiceImpl implements BoardMainService {
                     ));
         }
 
-        // 5) 기본 이미지 URL (설정에서 주입)
+        // 5) 기본 이미지 URL (설정에서)
         String defaultThumb = imageProperties.getDefaultBoardThumbnail();
 
-        // 혹시 yml 설정 누락 시 최소 방어(원하면 제거해도 됨)
-        if (defaultThumb == null || defaultThumb.isBlank()) {
-            defaultThumb = ""; // 또는 진짜 하드코딩 fallback 1개 두기
-        }
-
-        // 6) 최종 결과 조립: 썸네일 없으면 기본 이미지로 대체
+        // 6) 결과 조립: 썸네일 없으면 기본 이미지로 대체
         List<HotBoardCardResult> results = new ArrayList<>(Math.min(RESULT_SIZE, items.size()));
 
         for (HotMoimBoardItemQuery item : items) {

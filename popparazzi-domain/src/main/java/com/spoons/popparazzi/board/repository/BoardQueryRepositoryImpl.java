@@ -43,13 +43,13 @@ public class BoardQueryRepositoryImpl implements BoardQueryRepository {
                         likeMapping.createdAt.between(from, to)
                 )
                 .where(
-                        boardMaster.type.eq(BoardType.M),
-                        boardMaster.deleteYn.eq(YesNo.NO)
+                        boardMaster.type.eq(BoardType.M),     // 모임후기
+                        boardMaster.deleteYn.eq(YesNo.NO)     // 삭제 제외
                 )
                 .groupBy(boardMaster.boardCode, boardMaster.title)
                 .orderBy(
-                        likeCount.desc(),
-                        boardMaster.regDt.desc()
+                        likeCount.desc(),                    // 좋아요 많은 순
+                        boardMaster.regDt.desc()             // 동률 최신 순
                 )
                 .limit(RESULT_LIMIT)
                 .fetch();
