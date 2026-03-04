@@ -21,10 +21,26 @@ public class MoimMemberMapping {
     @Column(name = "mp_join_yn", length = 1, nullable = false)
     private YesNo joinYn;
 
-    public MoimMemberMapping(String mmCode, String tmmCode) {
+    // ✅ 신청자 기본 생성: 승인 대기 + join YES(참가 의사 있음)
+    public static MoimMemberMapping applicant(String mmCode, String tmmCode) {
+        return new MoimMemberMapping(mmCode, tmmCode, false, YesNo.YES);
+    }
+
+    // ✅ 방장 생성: 자동 승인 + join YES
+    public static MoimMemberMapping leader(String mmCode, String tmmCode) {
+        return new MoimMemberMapping(mmCode, tmmCode, true, YesNo.YES);
+    }
+
+    // 내부 전용 생성자 (의도는 팩토리에서만 결정)
+    private MoimMemberMapping(String mmCode, String tmmCode, boolean approved, YesNo joinYn) {
         this.id = new MoimMemberMappingId(mmCode, tmmCode);
-        this.isApproved = false;
-        this.joinYn = YesNo.YES;
+        this.isApproved = approved;
+        this.joinYn = joinYn;
+    }
+
+    // 필요하면 “승인” 행위도 도메인 메서드로
+    public void approve() {
+        this.isApproved = true;
     }
 
     public boolean isJoined() {

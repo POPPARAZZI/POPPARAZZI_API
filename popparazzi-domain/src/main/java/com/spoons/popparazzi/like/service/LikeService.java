@@ -1,6 +1,6 @@
 package com.spoons.popparazzi.like.service;
 
-import com.spoons.popparazzi.like.dto.LikeToggleResult;
+import com.spoons.popparazzi.like.dto.result.LikeToggleResult;
 import com.spoons.popparazzi.like.entity.LikeMapping;
 import com.spoons.popparazzi.like.enums.LikeType;
 import com.spoons.popparazzi.like.repository.LikeRepository;

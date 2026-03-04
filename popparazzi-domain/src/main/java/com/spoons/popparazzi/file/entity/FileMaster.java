@@ -31,4 +31,14 @@ public class FileMaster {
 
     @Column(name = "fm_reg_dt", nullable = false)
     private LocalDateTime regDt;
+
+    // ✅ 생성용 팩토리
+    public static FileMaster create(String parentCode, String url, FileType fileType) {
+        FileMaster f = new FileMaster();
+        f.parentCode = parentCode;
+        f.url = url;
+        f.fmType = fileType;
+        f.regDt = LocalDateTime.now();
+        return f;
+    }
 }

@@ -9,5 +9,5 @@ public record HotMoimCardResponse(
         int currentParticipants,
         int maxParticipants,
         String thumbnailUrl,
-        long likeCount24h
+        long likeCountToday
 ) {}

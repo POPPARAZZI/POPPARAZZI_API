@@ -2,15 +2,16 @@ package com.spoons.popparazzi.moim;
 
 import com.spoons.popparazzi.like.service.LikeService;
 import com.spoons.popparazzi.moim.dto.request.CreateMoimRequest;
+import com.spoons.popparazzi.moim.dto.response.CreateMoimResponse;
 import com.spoons.popparazzi.moim.dto.response.HotMoimCardResponse;
 import com.spoons.popparazzi.moim.dto.response.MoimMainResponse;
 import com.spoons.popparazzi.moim.dto.response.MoimRecommendCardResponse;
+import com.spoons.popparazzi.moim.service.MoimCommandService;
 import com.spoons.popparazzi.moim.service.MoimService;
 import com.spoons.popparazzi.response.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,14 +23,18 @@ import java.util.List;
 public class MoimController {
 
     private final MoimService moimService;
+    private final MoimCommandService moimCommandService;
     private final LikeService likeService;
 
+    // 모임 생성
     @PostMapping
-    public ResponseEntity<Long> create(
+    public ApiResponse<CreateMoimResponse> create(
+            @RequestHeader("X-MEMBER-CODE") String memberCode,
             @RequestBody @Valid CreateMoimRequest request
     ) {
-        Long meetingId = moimService.create(request.toCommand());
-        return ResponseEntity.ok(meetingId);
+        log.info("CREATE MOIM CALLED: memberCode={}, popupCode={}", memberCode, request.getPopupCode());
+        String moimCode = moimCommandService.create(request.toCommand(), memberCode);
+        return ApiResponse.success(new CreateMoimResponse(moimCode));
     }
 
     // 신규 오픈 모임
@@ -70,7 +75,7 @@ public class MoimController {
                         it.currentParticipants(),
                         it.maxParticipants(),
                         it.thumbnailUrl(),
-                        it.likeCount24h()
+                        it.likeCountToday()
                 ))
                 .toList();
 

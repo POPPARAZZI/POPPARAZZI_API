@@ -2,6 +2,7 @@ package com.spoons.popparazzi.moim.service.support;
 
 import com.spoons.popparazzi.category.dto.query.MoimCategoryRow;
 import com.spoons.popparazzi.category.repository.CategoryQueryRepository;
+import com.spoons.popparazzi.like.enums.LikeType;
 import com.spoons.popparazzi.like.repository.LikeQueryRepository;
 import com.spoons.popparazzi.moim.dto.query.recommend.MoimParticipantsCountQuery;
 import com.spoons.popparazzi.moim.repository.recommend.MoimRecommendQueryRepository;
@@ -21,7 +22,6 @@ public class MoimCardSupportServiceImpl implements MoimCardSupportService {
     private final MoimRecommendQueryRepository recommendQueryRepository;
     private final LikeQueryRepository likeQueryRepository;
 
-    // 1️⃣ 카테고리 3개
     @Override
     public Map<String, List<String>> getMoimCategories(List<String> moimCodes) {
 
@@ -45,7 +45,6 @@ public class MoimCardSupportServiceImpl implements MoimCardSupportService {
                 ));
     }
 
-    // 2️⃣ 참여 인원 수
     @Override
     public Map<String, Integer> getParticipantCounts(List<String> moimCodes) {
 
@@ -63,7 +62,6 @@ public class MoimCardSupportServiceImpl implements MoimCardSupportService {
                 ));
     }
 
-    // 3️⃣ liked 여부
     @Override
     public Set<String> getLikedMoimCodes(String memberCode, List<String> moimCodes) {
 
@@ -71,8 +69,9 @@ public class MoimCardSupportServiceImpl implements MoimCardSupportService {
             return Set.of();
         }
 
+        // ✅ 변경 포인트: 범용 메소드 호출
         return new HashSet<>(
-                likeQueryRepository.findLikedMoimCodes(memberCode, moimCodes)
+                likeQueryRepository.findLikedTargetCodes(memberCode, LikeType.M, moimCodes)
         );
     }
 }

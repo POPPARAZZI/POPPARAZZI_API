@@ -63,4 +63,26 @@ public class Moim {
 
     @Column(name = "mm_delete_dt")
     private LocalDateTime deleteDt;
+
+    public static Moim create(
+            String popupCode,
+            String leaderMemberCode,
+            LocalDateTime scheduleAt,
+            int maxParticipants,
+            String title,
+            String body,
+            String preQuestion
+    ) {
+        Moim moim = new Moim();
+        moim.popupCode = popupCode;
+        moim.leaderMemberCode = leaderMemberCode;
+        moim.date = scheduleAt;
+        moim.maxParticipants = maxParticipants;
+        moim.title = title;
+        moim.body = body;
+        moim.preQuestion = preQuestion;
+        moim.regDt = LocalDateTime.now();
+        moim.deleteYn = YesNo.NO;
+        return moim;
+    }
 }

@@ -29,6 +29,7 @@ public class SecurityConfig {
                         .requestMatchers("/likes/**").permitAll()
                         .requestMatchers("board/**").permitAll()
                         .requestMatchers("/test/**").permitAll()
+                        .requestMatchers("/files/**").permitAll()
                         .anyRequest().authenticated()
                 )
 

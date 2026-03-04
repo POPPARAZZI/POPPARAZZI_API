@@ -3,18 +3,13 @@ package com.spoons.popparazzi.moim.repository.hot;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.spoons.popparazzi.like.enums.LikeType;
-import com.spoons.popparazzi.moim.dto.result.HotMoimCardResult;
-import com.spoons.popparazzi.moim.dto.query.hot.HotMoimRankQuery;
 import com.spoons.popparazzi.common.YesNo;
+import com.spoons.popparazzi.moim.dto.result.HotMoimCardResult;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
-import static com.spoons.popparazzi.like.entity.QLikeMapping.likeMapping;
 import static com.spoons.popparazzi.moim.entity.QMoim.moim;
 import static com.spoons.popparazzi.moim.entity.QMoimMemberMapping.moimMemberMapping;
 
@@ -24,36 +19,6 @@ public class HotMoimQueryRepositoryImpl implements HotMoimQueryRepository {
 
     private final JPAQueryFactory queryFactory;
 
-    /**
-     * 24시간(또는 since 이후) 좋아요 기준 핫 모임 랭킹 Top N
-     * - 반환: (moimCode, likeCount24h)
-     */
-    @Override
-    public List<HotMoimRankQuery> findHotRankKeys(LikeType type, LocalDateTime since, Pageable pageable) {
-
-        var likeCount = likeMapping.count();
-
-        return queryFactory
-                .select(Projections.constructor(
-                        HotMoimRankQuery.class,
-                        likeMapping.targetCode,
-                        likeCount
-                ))
-                .from(likeMapping)
-                .where(
-                        likeMapping.type.eq(type),
-                        likeMapping.createdAt.goe(since)
-                )
-                .groupBy(likeMapping.targetCode)
-                .orderBy(likeCount.desc())
-                .offset(pageable.getOffset())
-                .limit(pageable.getPageSize())
-                .fetch();
-    }
-
-    /**
-     * 핫한 모임 카드 베이스(참여자수, 기본정보) 조립
-     */
     @Override
     public List<HotMoimCardResult> findHotCardsBase(List<String> mmCodes) {
         if (mmCodes == null || mmCodes.isEmpty()) return List.of();
@@ -62,7 +27,7 @@ public class HotMoimQueryRepositoryImpl implements HotMoimQueryRepository {
                 .when(moimMemberMapping.joinYn.eq(YesNo.YES)).then(1)
                 .otherwise(0)
                 .sum()
-                .intValue(); // Integer expression으로 변환
+                .intValue();
 
         return queryFactory
                 .select(Projections.constructor(
@@ -71,10 +36,10 @@ public class HotMoimQueryRepositoryImpl implements HotMoimQueryRepository {
                         moim.popupCode,
                         moim.title,
                         moim.date,
-                        joinedCount,           // currentParticipants
+                        joinedCount,
                         moim.maxParticipants,
-                        com.querydsl.core.types.dsl.Expressions.nullExpression(String.class), // thumbnailUrl (나중에 붙임)
-                        com.querydsl.core.types.dsl.Expressions.constant(0L)                  // likeCount24h (나중에 ranks에서 붙임)
+                        com.querydsl.core.types.dsl.Expressions.nullExpression(String.class),
+                        com.querydsl.core.types.dsl.Expressions.constant(0L)
                 ))
                 .from(moim)
                 .leftJoin(moimMemberMapping)

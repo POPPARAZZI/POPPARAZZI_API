@@ -1,4 +1,4 @@
-package com.spoons.popparazzi.like.dto;
+package com.spoons.popparazzi.like.dto.result;
 
 import com.spoons.popparazzi.like.enums.LikeType;
 
