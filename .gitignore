@@ -40,3 +40,10 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+
+# local config
+application.yml
+application-dev.yml
+
+# local upload files
+uploads/
