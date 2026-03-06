@@ -5,6 +5,7 @@ import com.spoons.popparazzi.category.entity.CategoryMaster;
 import com.spoons.popparazzi.category.enums.CategoryType;
 import com.spoons.popparazzi.category.repository.CategoryMappingRepository;
 import com.spoons.popparazzi.category.repository.CategoryMasterRepository;
+import com.spoons.popparazzi.common.YesNo;
 import com.spoons.popparazzi.error.exception.BusinessException;
 import com.spoons.popparazzi.file.enums.FileType;
 import com.spoons.popparazzi.file.service.FileCommandService;
@@ -19,7 +20,9 @@ import com.spoons.popparazzi.seq.service.SeqService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
@@ -46,40 +49,45 @@ public class MoimCommandServiceImpl implements MoimCommandService {
 
     private final SeqService seqService;
 
-    // ✅ 파일 선업로드(임시) -> 모임 생성 후 parentCode 연결
     private final FileCommandService fileCommandService;
 
-    // 1. 모임 생성
+    /* 1. 모임 생성 */
     @Override
-    public String create(CreateMoimCommand command, String leaderMemberCode) {
+    public String create(CreateMoimCommand command, List<MultipartFile> files, String leaderMemberCode) {
 
         // 0) 기본 방어
         if (command == null) {
-            throw new BusinessException(MoimErrorCode.MOIM_NOT_FOUND);
+            throw new BusinessException(MoimErrorCode.INVALID_REQUEST);
         }
         if (leaderMemberCode == null || leaderMemberCode.isBlank()) {
-            throw new BusinessException(MoimErrorCode.MOIM_NOT_FOUND);
+            throw new BusinessException(MoimErrorCode.INVALID_REQUEST);
         }
 
         // 1) 팝업 존재 검증
         String popupCode = command.getPopupCode();
+
         if (popupCode == null || popupCode.isBlank()) {
-            throw new BusinessException(MoimErrorCode.MOIM_NOT_FOUND);
+            throw new BusinessException(MoimErrorCode.INVALID_REQUEST);
         }
-        if (!popupRepository.existsById(popupCode)) {
-            throw new BusinessException(MoimErrorCode.MOIM_NOT_FOUND);
+
+        boolean popupExists = popupRepository.existsById(popupCode);
+
+        if (!popupExists) {
+            throw new BusinessException(MoimErrorCode.MOIM_NOT_FOUND); // 원하면 INVALID_REQUEST로 바꿔도 됨
         }
 
         // 2) 정원 검증 (1~9)
         int maxParticipants = command.getMaxParticipants();
+
         if (maxParticipants < MAX_PARTICIPANTS_MIN || maxParticipants > MAX_PARTICIPANTS_MAX) {
-            throw new BusinessException(MoimErrorCode.MOIM_NOT_FOUND);
+            throw new BusinessException(MoimErrorCode.INVALID_REQUEST);
         }
 
         // 3) 일정 검증 (과거 불가)
         LocalDateTime scheduleAt = command.getScheduleAt();
+
         if (scheduleAt == null || scheduleAt.isBefore(LocalDateTime.now())) {
-            throw new BusinessException(MoimErrorCode.MOIM_NOT_FOUND);
+            throw new BusinessException(MoimErrorCode.INVALID_REQUEST);
         }
 
         // 4) 카테고리 검증 (1~3, 중복 제거, 존재 + type=M)
@@ -94,23 +102,24 @@ public class MoimCommandServiceImpl implements MoimCommandService {
                 .toList();
 
         if (categoryCodes.size() < CATEGORY_MIN || categoryCodes.size() > CATEGORY_MAX) {
-            throw new BusinessException(MoimErrorCode.MOIM_NOT_FOUND);
+            throw new BusinessException(MoimErrorCode.INVALID_REQUEST);
         }
 
         List<CategoryMaster> categories = categoryMasterRepository.findAllByCodeIn(categoryCodes);
 
         if (categories.size() != categoryCodes.size()) {
-            throw new BusinessException(MoimErrorCode.MOIM_NOT_FOUND);
+            throw new BusinessException(MoimErrorCode.INVALID_REQUEST);
         }
 
         boolean hasInvalidType = categories.stream()
                 .anyMatch(c -> c.getType() != CategoryType.M);
 
+
         if (hasInvalidType) {
-            throw new BusinessException(MoimErrorCode.MOIM_NOT_FOUND);
+            throw new BusinessException(MoimErrorCode.INVALID_REQUEST);
         }
 
-        // 5) Moim 생성 + 코드 세팅 (Moim.create 팩토리 사용)
+        // 5) Moim 생성 + 코드 세팅
         Moim moim = Moim.create(
                 popupCode,
                 leaderMemberCode,
@@ -121,7 +130,6 @@ public class MoimCommandServiceImpl implements MoimCommandService {
                 command.getPreQuestion() == null ? "" : command.getPreQuestion()
         );
 
-        // mm_code 생성
         seqService.getSeqCode(moim);
 
         // 6) 모임 저장
@@ -139,10 +147,8 @@ public class MoimCommandServiceImpl implements MoimCommandService {
 
         categoryMappingRepository.saveAll(mappings);
 
-        // ✅ 9) 파일 연결(전략 B)
-        // - 파일은 이미 /files/temp 로 업로드되어 parentCode=MOIM_TEMP 상태
-        // - 여기서 parentCode를 실제 moimCode로 업데이트
-        fileCommandService.attachToParent(command.getFileSeqs(), moimCode, FileType.M);
+        // 9) 파일 저장 (전략 C)
+        fileCommandService.saveFiles(files, FileType.M, moimCode);
 
         return moimCode;
     }
@@ -151,4 +157,40 @@ public class MoimCommandServiceImpl implements MoimCommandService {
         if (value == null) return "";
         return value.trim();
     }
+
+    /* 2. 모임 수정 */
+
+
+    /* 3. 모임 삭제
+    * 모임 존재 확인, 작성자 확인, 모임 당일 삭제 불가
+    * 첨부파일 실제 스토리지 삭제, file_master : soft delete, moim : soft delete */
+    @Override
+    public void delete(String moimCode, String requesterMemberCode) {
+        Moim moim = moimRepository.findByMoimCodeAndDeleteYn(moimCode, YesNo.NO)
+                .orElseThrow(() -> new BusinessException(MoimErrorCode.MOIM_NOT_FOUND));
+
+        validateDeleteAuthority(moim, requesterMemberCode);
+        validateDeleteDate(moim);
+
+        fileCommandService.deleteFiles(moimCode, FileType.M);
+
+        moim.softDelete();
+    }
+
+    // 삭제 권한 : 작성자만
+    private void validateDeleteAuthority(Moim moim, String requesterMemberCode) {
+        if (!moim.getLeaderMemberCode().equals(requesterMemberCode)) {
+            throw new BusinessException(MoimErrorCode.MOIM_DELETE_FORBIDDEN);
+        }
+    }
+
+    // 삭제 조건 : 당일 불가
+    private void validateDeleteDate(Moim moim) {
+        LocalDate today = LocalDate.now();
+
+        if (moim.getDate().toLocalDate().isEqual(today)) {
+            throw new BusinessException(MoimErrorCode.MOIM_DELETE_NOT_ALLOWED_ON_EVENT_DAY);
+        }
+    }
+
 }

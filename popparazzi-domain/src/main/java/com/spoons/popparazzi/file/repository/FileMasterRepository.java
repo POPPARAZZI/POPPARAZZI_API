@@ -1,25 +1,18 @@
 package com.spoons.popparazzi.file.repository;
 
+import com.spoons.popparazzi.common.YesNo;
 import com.spoons.popparazzi.file.entity.FileMaster;
+import com.spoons.popparazzi.file.enums.FileType;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 
-import java.util.Collection;
+import java.util.List;
 
 public interface FileMasterRepository extends JpaRepository<FileMaster, Long> {
 
-    @Modifying(clearAutomatically = true, flushAutomatically = true)
-    @Query("""
-        update FileMaster f
-           set f.parentCode = :parentCode
-         where f.fmSeq in :fileSeqs
-           and f.parentCode = :tempCode
-    """)
-    int attachToParentFromTemp(
-            @Param("fileSeqs") Collection<Long> fileSeqs,
-            @Param("parentCode") String parentCode,
-            @Param("tempCode") String tempCode
+    // 1. 조건에 맞는 파일 조회
+    List<FileMaster> findAllByParentCodeAndFmTypeAndDeleteYn(
+            String parentCode,
+            FileType fmType,
+            YesNo deleteYn
     );
 }

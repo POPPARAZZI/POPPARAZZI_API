@@ -17,5 +17,4 @@ public class CreateMoimCommand {
     private final List<String> categoryCodes;
     private final String title;
     private final String content;
-    private final List<Long> fileSeqs;
 }

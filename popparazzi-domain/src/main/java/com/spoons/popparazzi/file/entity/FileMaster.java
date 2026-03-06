@@ -1,10 +1,12 @@
 package com.spoons.popparazzi.file.entity;
 
+import com.spoons.popparazzi.common.YesNo;
 import com.spoons.popparazzi.file.enums.FileType;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 
@@ -29,6 +31,10 @@ public class FileMaster {
     @Column(name="fm_type", nullable=false, length=1)
     private FileType fmType;
 
+    @Column(name = "fm_delete_yn", length = 1, nullable = false)
+    private YesNo deleteYn = YesNo.NO;
+
+    @CreationTimestamp
     @Column(name = "fm_reg_dt", nullable = false)
     private LocalDateTime regDt;
 
@@ -39,6 +45,16 @@ public class FileMaster {
         f.url = url;
         f.fmType = fileType;
         f.regDt = LocalDateTime.now();
+        f.deleteYn = YesNo.NO;
         return f;
+    }
+
+    // 소프트 삭제
+    public void softDelete() {
+        this.deleteYn = YesNo.YES;
+    }
+
+    public boolean isDeleted() {
+        return this.deleteYn != null && this.deleteYn.isYes();
     }
 }

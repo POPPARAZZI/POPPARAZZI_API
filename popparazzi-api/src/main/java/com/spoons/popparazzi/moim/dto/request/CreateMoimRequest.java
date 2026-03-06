@@ -1,9 +1,10 @@
 package com.spoons.popparazzi.moim.dto.request;
 
+import com.spoons.popparazzi.moim.dto.command.CreateMoimCommand;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import com.spoons.popparazzi.moim.dto.command.CreateMoimCommand;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -14,9 +15,17 @@ public class CreateMoimRequest {
 
     @NotBlank
     private String popupCode;
-    private int maxParticipants;
+
+    @NotNull
+    private Integer maxParticipants;
+
+    @NotNull
     private LocalDateTime scheduleAt;
+
+    @NotBlank
     private String preQuestion;
+
+    @NotNull
     private List<String> categoryCodes;
 
     @NotBlank
@@ -24,8 +33,6 @@ public class CreateMoimRequest {
 
     @NotBlank
     private String content;
-
-    private List<Long> fileSeqs;
 
     public CreateMoimCommand toCommand() {
         return new CreateMoimCommand(
@@ -35,8 +42,7 @@ public class CreateMoimRequest {
                 preQuestion,
                 categoryCodes,
                 title,
-                content,
-                fileSeqs
+                content
         );
     }
 }

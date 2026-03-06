@@ -3,9 +3,10 @@ package com.spoons.popparazzi.file.repository;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import com.spoons.popparazzi.common.YesNo;
 import com.spoons.popparazzi.file.dto.query.FileThumbQuery;
-import com.spoons.popparazzi.file.enums.FileType;
 import com.spoons.popparazzi.file.entity.QFileMaster;
+import com.spoons.popparazzi.file.enums.FileType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -24,26 +25,28 @@ public class FileThumbQueryRepositoryImpl implements FileThumbQueryRepository {
     public List<FileThumbQuery> findFirstThumbs(FileType type, List<String> parentCodes) {
         if (parentCodes == null || parentCodes.isEmpty()) return List.of();
 
-        // 서브쿼리용 별칭(Q타입은 new로 하나 더 만들어야 함)
         var f2 = new QFileMaster("f2");
 
         return queryFactory
                 .select(Projections.constructor(
                         FileThumbQuery.class,
-                        fileMaster.parentCode,
-                        fileMaster.url
+                        fileMaster.parentCode,  // String parentCode
+                        fileMaster.fmSeq,        // Long fileSeq
+                        fileMaster.url           // String url
                 ))
                 .from(fileMaster)
                 .where(
                         fileMaster.fmType.eq(type),
                         fileMaster.parentCode.in(parentCodes),
+                        fileMaster.deleteYn.eq(YesNo.NO),
                         fileMaster.fmSeq.eq(
                                 JPAExpressions
                                         .select(f2.fmSeq.min())
                                         .from(f2)
                                         .where(
                                                 f2.fmType.eq(fileMaster.fmType),
-                                                f2.parentCode.eq(fileMaster.parentCode)
+                                                f2.parentCode.eq(fileMaster.parentCode),
+                                                f2.deleteYn.eq(YesNo.NO) // ✅ 서브쿼리도 삭제 제외
                                         )
                         )
                 )

@@ -1,5 +1,6 @@
 package com.spoons.popparazzi.file.service;
 
+import com.spoons.popparazzi.common.YesNo;
 import com.spoons.popparazzi.error.exception.BusinessException;
 import com.spoons.popparazzi.file.entity.FileMaster;
 import com.spoons.popparazzi.file.enums.FileType;
@@ -19,16 +20,27 @@ import java.util.Objects;
 public class FileCommandServiceImpl implements FileCommandService {
 
     private static final int MAX_FILES = 5;
-    private static final String TEMP_PARENT_CODE_MOIM = "MOIM_TEMP";
 
     private final FileMasterRepository fileMasterRepository;
     private final FileStorageService fileStorageService;
 
+    /**
+     * 전략 C: 최종 등록 시점에 파일을 업로드하고, 바로 부모코드(parentCode)에 연결해서 저장한다.
+     * - files가 null/empty면 첨부 없음으로 보고 그냥 종료
+     */
     @Override
-    public List<Long> uploadTemp(List<MultipartFile> files, FileType fileType) {
+    public void saveFiles(List<MultipartFile> files, FileType fileType, String parentCode) {
 
         if (files == null || files.isEmpty()) {
-            throw new BusinessException(FileErrorCode.FILE_EMPTY);
+            return;
+        }
+
+        if (parentCode == null || parentCode.isBlank()) {
+            throw new BusinessException(FileErrorCode.FILE_INVALID_PARENT);
+        }
+
+        if (fileType == null) {
+            throw new BusinessException(FileErrorCode.FILE_INVALID_TYPE);
         }
 
         List<MultipartFile> filtered = files.stream()
@@ -37,59 +49,35 @@ public class FileCommandServiceImpl implements FileCommandService {
                 .toList();
 
         if (filtered.isEmpty()) {
-            throw new BusinessException(FileErrorCode.FILE_EMPTY);
+            return;
         }
 
         if (filtered.size() > MAX_FILES) {
             throw new BusinessException(FileErrorCode.FILE_TOO_MANY);
         }
 
-        String tempParent = resolveTempParentCode(fileType);
+        // 저장소 업로드 + DB insert (parentCode는 바로 실제 코드)
+        for (MultipartFile file : filtered) {
+            String url = fileStorageService.save(file);
 
-        return filtered.stream()
-                .map(file -> {
-                    String url = fileStorageService.save(file);
-                    FileMaster saved = fileMasterRepository.save(
-                            FileMaster.create(tempParent, url, fileType)
-                    );
-                    return saved.getFmSeq();
-                })
-                .toList();
+            fileMasterRepository.save(
+                    FileMaster.create(parentCode, url, fileType)
+            );
+        }
     }
 
     @Override
-    public void attachToParent(List<Long> fileSeqs, String parentCode, FileType fileType) {
+    public void deleteFiles(String parentCode, FileType fileType) {
+        List<FileMaster> files = fileMasterRepository
+                .findAllByParentCodeAndFmTypeAndDeleteYn(parentCode, fileType, YesNo.NO);
 
-        if (fileSeqs == null || fileSeqs.isEmpty()) {
+        if (files.isEmpty()) {
             return;
         }
 
-        if (parentCode == null || parentCode.isBlank()) {
-            throw new BusinessException(FileErrorCode.FILE_INVALID_PARENT);
+        for (FileMaster file : files) {
+            fileStorageService.delete(file.getUrl());
+            file.softDelete();
         }
-
-        List<Long> ids = fileSeqs.stream()
-                .filter(Objects::nonNull)
-                .distinct()
-                .toList();
-
-        if (ids.size() > MAX_FILES) {
-            throw new BusinessException(FileErrorCode.FILE_TOO_MANY);
-        }
-
-        String tempParent = resolveTempParentCode(fileType);
-
-        int updated = fileMasterRepository.attachToParentFromTemp(ids, parentCode, tempParent);
-
-        if (updated != ids.size()) {
-            throw new BusinessException(FileErrorCode.FILE_ATTACH_FAILED);
-        }
-    }
-
-    private String resolveTempParentCode(FileType fileType) {
-        if (fileType == FileType.M) {
-            return TEMP_PARENT_CODE_MOIM;
-        }
-        return "TEMP";
     }
 }

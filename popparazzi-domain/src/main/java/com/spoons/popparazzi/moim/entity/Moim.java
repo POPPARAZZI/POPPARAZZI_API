@@ -7,6 +7,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 
@@ -36,7 +37,6 @@ public class Moim {
     )
     private Popup popup;
 
-
     @Column(name = "mm_tmm_code", length = 22, nullable = false)
     private String leaderMemberCode;
 
@@ -55,6 +55,7 @@ public class Moim {
     @Column(name = "mm_pre_question", nullable = false, columnDefinition = "text")
     private String preQuestion;
 
+    @CreationTimestamp
     @Column(name = "mm_reg_dt", nullable = false)
     private LocalDateTime regDt;
 
@@ -81,8 +82,12 @@ public class Moim {
         moim.title = title;
         moim.body = body;
         moim.preQuestion = preQuestion;
-        moim.regDt = LocalDateTime.now();
         moim.deleteYn = YesNo.NO;
         return moim;
+    }
+
+    public void softDelete() {
+        this.deleteYn = YesNo.YES;
+        this.deleteDt = LocalDateTime.now();
     }
 }

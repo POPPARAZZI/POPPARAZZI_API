@@ -7,13 +7,9 @@ import java.util.List;
 
 public interface FileCommandService {
 
-    /**
-     * 임시 parentCode로 업로드(저장 + DB insert) 후 fileSeq 리스트 반환
-     */
-    List<Long> uploadTemp(List<MultipartFile> files, FileType fileType);
+    /* 1. 파일 등록 */
+    void saveFiles(List<MultipartFile> files, FileType fileType, String parentCode);
 
-    /**
-     * 임시(TEMP)로 올라간 파일들을 실제 parentCode로 연결
-     */
-    void attachToParent(List<Long> fileSeqs, String parentCode, FileType fileType);
+    /* 2. 파일 삭제 */
+    void deleteFiles(String parentCode, FileType fileType);
 }
