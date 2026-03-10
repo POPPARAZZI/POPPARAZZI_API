@@ -3,6 +3,8 @@ package com.spoons.popparazzi.moim.repository.newest;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.spoons.popparazzi.common.YesNo;
+import com.spoons.popparazzi.member.entity.QMember;
+import com.spoons.popparazzi.moim.dto.query.MoimDetailQuery;
 import com.spoons.popparazzi.moim.dto.query.newest.NewestMoimItemQuery;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -35,5 +37,29 @@ public class MoimQueryRepositoryImpl implements MoimQueryRepository {
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
+    }
+
+    @Override
+    public MoimDetailQuery findMoimDetail(String moimCode) {
+        QMember member = QMember.member;
+
+        return queryFactory
+                .select(Projections.constructor(
+                        MoimDetailQuery.class,
+                        moim.moimCode,
+                        moim.title,
+                        moim.body,
+                        moim.date,
+                        moim.maxParticipants,
+                        moim.leaderMemberCode,
+                        member.profileUrl
+                ))
+                .from(moim)
+                .leftJoin(member).on(member.memberCode.eq(moim.leaderMemberCode))
+                .where(
+                        moim.moimCode.eq(moimCode),
+                        moim.deleteYn.eq(YesNo.NO)
+                )
+                .fetchOne();
     }
 }

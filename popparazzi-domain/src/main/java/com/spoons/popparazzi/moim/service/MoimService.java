@@ -1,6 +1,7 @@
 package com.spoons.popparazzi.moim.service;
 
 import com.spoons.popparazzi.moim.dto.result.HotMoimCardResult;
+import com.spoons.popparazzi.moim.dto.result.MoimDetailResult;
 import com.spoons.popparazzi.moim.dto.result.MoimRecommendCardResult;
 import com.spoons.popparazzi.moim.dto.result.NewestMoimCardResult;
 
@@ -16,5 +17,8 @@ public interface MoimService {
 
     // 즐겨찾기 기반 모임
     List<MoimRecommendCardResult> recommendForMember(String memberCode);
+
+    // 모임 상세 조회
+    MoimDetailResult getMoimDetail(String moimCode, String memberCode);
 }
 

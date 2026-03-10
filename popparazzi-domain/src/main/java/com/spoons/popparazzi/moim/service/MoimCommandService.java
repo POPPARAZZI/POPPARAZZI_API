@@ -1,6 +1,7 @@
 package com.spoons.popparazzi.moim.service;
 
 import com.spoons.popparazzi.moim.dto.command.CreateMoimCommand;
+import com.spoons.popparazzi.moim.dto.command.UpdateMoimCommand;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -17,6 +18,9 @@ public interface MoimCommandService {
      * @return 생성된 모임 코드(mm_code)
      */
     String create(CreateMoimCommand command, List<MultipartFile> files, String leaderMemberCode);
+
+    // 2. 모임 수정
+    String update(UpdateMoimCommand command, List<MultipartFile> files, String memberCode);
 
     // 3. 모임 삭제
     void delete(String moimCode, String requesterMemberCode);

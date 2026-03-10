@@ -27,7 +27,7 @@ public class FileStorageServiceImpl implements FileStorageService {
             return publicPrefix + "/" + filename;
 
         } catch (IOException e) {
-            throw new IllegalStateException("failed to save file", e);
+            throw new IllegalStateException("파일을 저장할 수 없습니다.", e);
         }
     }
 
@@ -46,7 +46,7 @@ public class FileStorageServiceImpl implements FileStorageService {
             Files.deleteIfExists(target);
 
         } catch (IOException e) {
-            throw new IllegalStateException("파일 삭제에 실패했습니다.", e);
+            throw new IllegalStateException("파일을 삭제할 수 없습니다.", e);
         }
     }
 

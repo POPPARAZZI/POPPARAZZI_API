@@ -25,7 +25,7 @@ public class FileCommandServiceImpl implements FileCommandService {
     private final FileStorageService fileStorageService;
 
     /**
-     * 전략 C: 최종 등록 시점에 파일을 업로드하고, 바로 부모코드(parentCode)에 연결해서 저장한다.
+     * 최종 등록 시점에 파일을 업로드하고, 바로 부모코드(parentCode)에 연결해서 저장한다.
      * - files가 null/empty면 첨부 없음으로 보고 그냥 종료
      */
     @Override
@@ -76,6 +76,28 @@ public class FileCommandServiceImpl implements FileCommandService {
         }
 
         for (FileMaster file : files) {
+            fileStorageService.delete(file.getUrl());
+            file.softDelete();
+        }
+    }
+
+    /* 수정용 삭제 */
+    @Override
+    public void deleteFilesExceptKeep(String parentCode, FileType fileType, List<Long> keepFileSeqs) {
+
+        List<Long> keepSeqs = keepFileSeqs == null ? List.of() : keepFileSeqs;
+
+        List<FileMaster> files = fileMasterRepository.findAllByParentCodeAndFmTypeAndDeleteYn(
+                parentCode,
+                fileType,
+                YesNo.NO
+        );
+
+        for (FileMaster file : files) {
+            if (keepSeqs.contains(file.getFmSeq())) {
+                continue;
+            }
+
             fileStorageService.delete(file.getUrl());
             file.softDelete();
         }

@@ -1,7 +1,10 @@
 package com.spoons.popparazzi.moim.entity;
 
 import com.spoons.popparazzi.common.YesNo;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.EmbeddedId;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -21,24 +24,27 @@ public class MoimMemberMapping {
     @Column(name = "mp_join_yn", length = 1, nullable = false)
     private YesNo joinYn;
 
-    // ✅ 신청자 기본 생성: 승인 대기 + join YES(참가 의사 있음)
-    public static MoimMemberMapping applicant(String mmCode, String tmmCode) {
-        return new MoimMemberMapping(mmCode, tmmCode, false, YesNo.YES);
+    @Column(name = "mp_answer")
+    private String answer;
+
+    // 신청자 생성 (모임 신청)
+    public static MoimMemberMapping applicant(String moimCode, String memberCode, String answer) {
+        return new MoimMemberMapping(moimCode, memberCode, false, YesNo.YES, answer);
     }
 
-    // ✅ 방장 생성: 자동 승인 + join YES
-    public static MoimMemberMapping leader(String mmCode, String tmmCode) {
-        return new MoimMemberMapping(mmCode, tmmCode, true, YesNo.YES);
+    // 모임장 생성 (모임 생성 시 자동 등록)
+    public static MoimMemberMapping leader(String moimCode, String memberCode) {
+        return new MoimMemberMapping(moimCode, memberCode, true, YesNo.YES, null);
     }
 
-    // 내부 전용 생성자 (의도는 팩토리에서만 결정)
-    private MoimMemberMapping(String mmCode, String tmmCode, boolean approved, YesNo joinYn) {
-        this.id = new MoimMemberMappingId(mmCode, tmmCode);
+    private MoimMemberMapping(String moimCode, String memberCode, boolean approved, YesNo joinYn, String answer) {
+        this.id = new MoimMemberMappingId(moimCode, memberCode);
         this.isApproved = approved;
         this.joinYn = joinYn;
+        this.answer = answer;
     }
 
-    // 필요하면 “승인” 행위도 도메인 메서드로
+    // 모임 승인
     public void approve() {
         this.isApproved = true;
     }

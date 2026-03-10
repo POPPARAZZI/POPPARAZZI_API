@@ -3,17 +3,19 @@ package com.spoons.popparazzi.moim;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.spoons.popparazzi.error.exception.BusinessException;
-import com.spoons.popparazzi.like.service.LikeService;
+import com.spoons.popparazzi.moim.dto.command.ApplyMoimCommand;
+import com.spoons.popparazzi.moim.dto.request.ApplyMoimRequest;
 import com.spoons.popparazzi.moim.dto.request.CreateMoimRequest;
-import com.spoons.popparazzi.moim.dto.response.CreateMoimResponse;
-import com.spoons.popparazzi.moim.dto.response.HotMoimCardResponse;
-import com.spoons.popparazzi.moim.dto.response.MoimMainResponse;
-import com.spoons.popparazzi.moim.dto.response.MoimRecommendCardResponse;
+import com.spoons.popparazzi.moim.dto.request.UpdateMoimRequest;
+import com.spoons.popparazzi.moim.dto.response.*;
+import com.spoons.popparazzi.moim.dto.result.MoimDetailResult;
 import com.spoons.popparazzi.moim.error.MoimErrorCode;
+import com.spoons.popparazzi.moim.service.MoimApplyService;
 import com.spoons.popparazzi.moim.service.MoimCommandService;
 import com.spoons.popparazzi.moim.service.MoimService;
 import com.spoons.popparazzi.response.ApiResponse;
 import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Valid;
 import jakarta.validation.Validator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,10 +35,10 @@ public class MoimController {
     private final ObjectMapper objectMapper;
     private final MoimService moimService;
     private final MoimCommandService moimCommandService;
+    private final MoimApplyService moimApplyService;
     private final Validator validator;
-    private final LikeService likeService;
 
-    /*----------------------------------- 모임 조회 -----------------------------------*/
+    /*----------------------------------- 모임 메인 -----------------------------------*/
     // 1. 신규 오픈 모임
     @GetMapping("/main/new")
     public ApiResponse<List<MoimMainResponse>> getNewestMoimsForMain(
@@ -104,6 +106,46 @@ public class MoimController {
         return ApiResponse.success(response);
     }
 
+    /*----------------------------------- 모임 조회 -----------------------------------*/
+    // 1. 모임 상세 조회
+    @GetMapping("/{moimCode}")
+    public ApiResponse<MoimDetailResponse> getMoimDetail(
+            @PathVariable String moimCode,
+            @RequestHeader("X-MEMBER-CODE") String memberCode
+    ) {
+        MoimDetailResult result = moimService.getMoimDetail(moimCode, memberCode);
+        MoimDetailResponse response = toResponse(result);
+        return ApiResponse.success(response);
+    }
+
+    private MoimDetailResponse toResponse(MoimDetailResult result) {
+
+        List<MoimDetailImageResponse> images =
+                result.images()
+                        .stream()
+                        .map(it -> new MoimDetailImageResponse(
+                                it.fileSeq(),
+                                it.url()
+                        ))
+                        .toList();
+
+        return new MoimDetailResponse(
+                result.moimCode(),
+                result.title(),
+                result.content(),
+                result.moimDate(),
+                result.maxParticipants(),
+                result.leaderMemberCode(),
+                result.leaderProfileUrl(),
+                images,
+                result.likeCount(),
+                result.liked(),
+                result.participantCount(),
+                result.extraParticipantCount(),
+                result.owner()
+        );
+    }
+
     /*----------------------------------- 모임 CRUD -----------------------------------*/
     // 1. 모임 생성
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -112,30 +154,32 @@ public class MoimController {
             @RequestPart("request") String requestJson,
             @RequestPart(value = "files", required = false) List<MultipartFile> files
     ) {
-        CreateMoimRequest request = parseRequest(requestJson);
+        CreateMoimRequest request = parseRequest(requestJson, CreateMoimRequest.class);
         validate(request);
 
         String moimCode = moimCommandService.create(request.toCommand(), files, memberCode);
         return ApiResponse.success(new CreateMoimResponse(moimCode));
     }
 
-    private CreateMoimRequest parseRequest(String requestJson) {
-        try {
-            return objectMapper.readValue(requestJson, CreateMoimRequest.class);
-        } catch (JsonProcessingException e) {
-            throw new BusinessException(MoimErrorCode.INVALID_REQUEST);
-        }
-    }
-
-    private void validate(CreateMoimRequest request) {
-        Set<ConstraintViolation<CreateMoimRequest>> violations = validator.validate(request);
-        if (!violations.isEmpty()) {
-            throw new BusinessException(MoimErrorCode.INVALID_REQUEST);
-        }
-    }
-
     // 2. 모임 수정
+    @PatchMapping(value = "/{moimCode}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ApiResponse<UpdateMoimResponse> updateMoim(
+            @PathVariable String moimCode,
+            @RequestHeader("X-MEMBER-CODE") String memberCode,
+            @RequestPart("request") String requestJson,
+            @RequestPart(value = "files", required = false) List<MultipartFile> files
+    ) {
+        UpdateMoimRequest request = parseRequest(requestJson, UpdateMoimRequest.class);
+        validate(request);
 
+        String updatedMoimCode = moimCommandService.update(
+                request.toCommand(moimCode),
+                files,
+                memberCode
+        );
+
+        return ApiResponse.success(new UpdateMoimResponse(updatedMoimCode));
+    }
 
     // 3. 모임 삭제
     @DeleteMapping("/{moimCode}")
@@ -144,7 +188,38 @@ public class MoimController {
             @RequestHeader("X-MEMBER-CODE") String requesterMemberCode
     ) {
         moimCommandService.delete(moimCode, requesterMemberCode);
-        return ApiResponse.success("모임이 삭제되었습니다.");
+        return ApiResponse.success(null);
     }
 
+    // 4. 모임 신청
+    @PostMapping("/{moimCode}/apply")
+    public ApiResponse<Void> applyMoim(
+            @PathVariable String moimCode,
+            @RequestBody @Valid ApplyMoimRequest request,
+            @RequestHeader("X-MEMBER-CODE") String memberCode
+    ) {
+
+        ApplyMoimCommand command = new ApplyMoimCommand(request.answer());
+        moimApplyService.apply(moimCode, memberCode, command);
+        return ApiResponse.success();
+    }
+
+    /*----------------------------------- 공통 -----------------------------------*/
+    // 1. JSON 파싱
+    private <T> T parseRequest(String requestJson, Class<T> clazz) {
+        try {
+            return objectMapper.readValue(requestJson, clazz);
+        } catch (JsonProcessingException e) {
+            throw new BusinessException(MoimErrorCode.INVALID_REQUEST);
+        }
+    }
+
+    // 2. 어노테이션 검증
+    private <T> void validate(T request) {
+        Set<ConstraintViolation<T>> violations = validator.validate(request);
+
+        if (!violations.isEmpty()) {
+            throw new BusinessException(MoimErrorCode.INVALID_REQUEST);
+        }
+    }
 }

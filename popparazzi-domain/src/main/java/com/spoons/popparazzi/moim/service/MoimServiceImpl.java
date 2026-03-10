@@ -1,19 +1,25 @@
 package com.spoons.popparazzi.moim.service;
 
+import com.spoons.popparazzi.common.YesNo;
+import com.spoons.popparazzi.error.exception.BusinessException;
+import com.spoons.popparazzi.file.dto.query.FileDetailQuery;
 import com.spoons.popparazzi.file.dto.query.MoimThumbTarget;
-import com.spoons.popparazzi.file.service.FileCommandService;
+import com.spoons.popparazzi.file.enums.FileType;
+import com.spoons.popparazzi.file.repository.FileQueryRepository;
 import com.spoons.popparazzi.file.service.FileThumbnailService;
 import com.spoons.popparazzi.like.dto.query.LikeRankQuery;
 import com.spoons.popparazzi.like.enums.LikeType;
 import com.spoons.popparazzi.like.repository.LikeQueryRepository;
+import com.spoons.popparazzi.like.repository.LikeRepository;
+import com.spoons.popparazzi.moim.dto.query.MoimDetailQuery;
 import com.spoons.popparazzi.moim.dto.query.newest.NewestMoimItemQuery;
 import com.spoons.popparazzi.moim.dto.query.recommend.MoimCategoryLinkQuery;
 import com.spoons.popparazzi.moim.dto.query.recommend.PreferredCategoryQuery;
 import com.spoons.popparazzi.moim.dto.query.recommend.PreferredSigunguQuery;
 import com.spoons.popparazzi.moim.dto.query.recommend.RecommendedMoimBaseQuery;
-import com.spoons.popparazzi.moim.dto.result.HotMoimCardResult;
-import com.spoons.popparazzi.moim.dto.result.MoimRecommendCardResult;
-import com.spoons.popparazzi.moim.dto.result.NewestMoimCardResult;
+import com.spoons.popparazzi.moim.dto.result.*;
+import com.spoons.popparazzi.moim.error.MoimErrorCode;
+import com.spoons.popparazzi.moim.repository.MoimMemberMappingRepository;
 import com.spoons.popparazzi.moim.repository.MoimRepository;
 import com.spoons.popparazzi.moim.repository.hot.HotMoimQueryRepository;
 import com.spoons.popparazzi.moim.repository.newest.MoimQueryRepository;
@@ -51,7 +57,10 @@ public class MoimServiceImpl implements MoimService {
     private final LikeQueryRepository likeQueryRepository;
     private final MoimCardSupportService moimCardSupportService;
     private final FileThumbnailService fileThumbnailService;
-    private final FileCommandService fileCommandService;
+
+    private final FileQueryRepository fileQueryRepository;
+    private final LikeRepository likeRepository;
+    private final MoimMemberMappingRepository moimMemberMappingRepository;
 
 
     // =========================
@@ -384,5 +393,66 @@ public class MoimServiceImpl implements MoimService {
     private int normalizeLimit(int limit, int defaultLimit) {
         if (limit <= 0) return defaultLimit;
         return Math.min(limit, LIMIT_MAX);
+    }
+
+    // 모임 상세 조회
+    @Override
+    public MoimDetailResult getMoimDetail(String moimCode, String memberCode) {
+
+        MoimDetailQuery detail = moimQueryRepository.findMoimDetail(moimCode);
+
+        if (detail == null) {
+            throw new BusinessException(MoimErrorCode.MOIM_NOT_FOUND);
+        }
+
+        List<MoimDetailImageResult> images = fileQueryRepository.findDetails(FileType.M, moimCode)
+                .stream()
+                .map(this::toImageResult)
+                .toList();
+
+        boolean liked = false;
+        if (memberCode != null && !memberCode.isBlank()) {
+            liked = likeRepository.existsByMemberCodeAndTargetCodeAndType(
+                    memberCode,
+                    moimCode,
+                    LikeType.M
+            );
+        }
+
+        long likeCount = likeRepository.countByTargetCodeAndType(moimCode, LikeType.M);
+
+        long participantCountLong =
+                moimMemberMappingRepository.countByIdMoimCodeAndIsApprovedTrueAndJoinYn(
+                        moimCode,
+                        YesNo.YES
+                );
+
+        int participantCount = Math.toIntExact(participantCountLong);
+        int extraParticipantCount = Math.max(0, participantCount - 1);
+
+        boolean owner = memberCode != null && memberCode.equals(detail.leaderMemberCode());
+
+        return new MoimDetailResult(
+                detail.moimCode(),
+                detail.title(),
+                detail.content(),
+                detail.moimDate(),
+                detail.maxParticipants(),
+                detail.leaderMemberCode(),
+                detail.leaderProfileUrl(),
+                images,
+                likeCount,
+                liked,
+                participantCount,
+                extraParticipantCount,
+                owner
+        );
+    }
+
+    private MoimDetailImageResult toImageResult(FileDetailQuery query) {
+        return new MoimDetailImageResult(
+                query.fileSeq(),
+                query.url()
+        );
     }
 }

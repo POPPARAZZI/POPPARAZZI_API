@@ -8,5 +8,9 @@ import java.util.Optional;
 
 public interface MoimRepository extends JpaRepository<Moim, String> {
 
+    // 조회용 모임 존재 여부
     Optional<Moim> findByMoimCodeAndDeleteYn(String moimCode, YesNo deleteYn);
+
+    // 모임 한 건 조회
+    Optional<Moim> findByMoimCode(String moimCode);
 }

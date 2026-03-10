@@ -14,6 +14,12 @@ public interface LikeRepository extends JpaRepository<LikeMapping, Long> {
             LikeType type
     );
 
+    boolean existsByMemberCodeAndTargetCodeAndType(
+            String memberCode,
+            String targetCode,
+            LikeType type
+    );
+
     long countByTargetCodeAndType(String targetCode, LikeType type);
 
     void deleteByMemberCodeAndTargetCodeAndType(
