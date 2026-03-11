@@ -1,17 +1,17 @@
-package com.spoons.popparazzi.moim.repository.newest;
+package com.spoons.popparazzi.moim.repository;
 
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.spoons.popparazzi.common.YesNo;
 import com.spoons.popparazzi.member.entity.QMember;
+import com.spoons.popparazzi.moim.dto.query.MoimApplyInfoQuery;
 import com.spoons.popparazzi.moim.dto.query.MoimDetailQuery;
-import com.spoons.popparazzi.moim.dto.query.newest.NewestMoimItemQuery;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
+import java.util.Optional;
 
+import static com.spoons.popparazzi.member.entity.QMember.member;
 import static com.spoons.popparazzi.moim.entity.QMoim.moim;
 
 @Repository
@@ -20,25 +20,7 @@ public class MoimQueryRepositoryImpl implements MoimQueryRepository {
 
     private final JPAQueryFactory queryFactory;
 
-    @Override
-    public List<NewestMoimItemQuery> findNewestForMain(Pageable pageable) {
-        return queryFactory
-                .select(Projections.constructor(
-                        NewestMoimItemQuery.class,
-                        moim.moimCode,
-                        moim.popupCode,
-                        moim.title,
-                        moim.date,
-                        moim.maxParticipants
-                ))
-                .from(moim)
-                .where(moim.deleteYn.eq(YesNo.NO))
-                .orderBy(moim.regDt.desc())
-                .offset(pageable.getOffset())
-                .limit(pageable.getPageSize())
-                .fetch();
-    }
-
+    // 1. 모임 상세 조회
     @Override
     public MoimDetailQuery findMoimDetail(String moimCode) {
         QMember member = QMember.member;
@@ -61,5 +43,26 @@ public class MoimQueryRepositoryImpl implements MoimQueryRepository {
                         moim.deleteYn.eq(YesNo.NO)
                 )
                 .fetchOne();
+    }
+
+    // 2. 모임 신청 화면 조회
+    @Override
+    public Optional<MoimApplyInfoQuery> findApplyInfoByMoimCode(String moimCode) {
+        return Optional.ofNullable(
+                queryFactory
+                        .select(Projections.constructor(
+                                MoimApplyInfoQuery.class,
+                                member.profileUrl,
+                                member.nickname,
+                                moim.preQuestion
+                        ))
+                        .from(moim)
+                        .join(member).on(moim.leaderMemberCode.eq(member.memberCode))
+                        .where(
+                                moim.moimCode.eq(moimCode),
+                                moim.deleteYn.eq(YesNo.NO)
+                        )
+                        .fetchOne()
+        );
     }
 }

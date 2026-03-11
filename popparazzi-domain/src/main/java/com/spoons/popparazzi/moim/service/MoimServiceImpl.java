@@ -12,18 +12,14 @@ import com.spoons.popparazzi.like.enums.LikeType;
 import com.spoons.popparazzi.like.repository.LikeQueryRepository;
 import com.spoons.popparazzi.like.repository.LikeRepository;
 import com.spoons.popparazzi.moim.dto.query.MoimDetailQuery;
-import com.spoons.popparazzi.moim.dto.query.newest.NewestMoimItemQuery;
-import com.spoons.popparazzi.moim.dto.query.recommend.MoimCategoryLinkQuery;
-import com.spoons.popparazzi.moim.dto.query.recommend.PreferredCategoryQuery;
-import com.spoons.popparazzi.moim.dto.query.recommend.PreferredSigunguQuery;
-import com.spoons.popparazzi.moim.dto.query.recommend.RecommendedMoimBaseQuery;
+import com.spoons.popparazzi.moim.dto.query.main.*;
 import com.spoons.popparazzi.moim.dto.result.*;
 import com.spoons.popparazzi.moim.error.MoimErrorCode;
+import com.spoons.popparazzi.moim.repository.MoimMainRepository;
 import com.spoons.popparazzi.moim.repository.MoimMemberMappingRepository;
+import com.spoons.popparazzi.moim.repository.MoimQueryRepository;
 import com.spoons.popparazzi.moim.repository.MoimRepository;
-import com.spoons.popparazzi.moim.repository.hot.HotMoimQueryRepository;
-import com.spoons.popparazzi.moim.repository.newest.MoimQueryRepository;
-import com.spoons.popparazzi.moim.repository.recommend.MoimRecommendQueryRepository;
+import com.spoons.popparazzi.moim.service.support.MoimAccessSupportService;
 import com.spoons.popparazzi.moim.service.support.MoimCardSupportService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -51,11 +47,11 @@ public class MoimServiceImpl implements MoimService {
 
     private final MoimRepository moimRepository;
     private final MoimQueryRepository moimQueryRepository;
-    private final HotMoimQueryRepository hotMoimQueryRepository;
-    private final MoimRecommendQueryRepository recommendQueryRepository;
+    private final MoimMainRepository moimMainRepository;
 
     private final LikeQueryRepository likeQueryRepository;
     private final MoimCardSupportService moimCardSupportService;
+    private final MoimAccessSupportService moimAccessSupportService;
     private final FileThumbnailService fileThumbnailService;
 
     private final FileQueryRepository fileQueryRepository;
@@ -72,7 +68,7 @@ public class MoimServiceImpl implements MoimService {
         int fixedLimit = normalizeLimit(limit, NEWEST_DEFAULT_LIMIT);
 
         List<NewestMoimItemQuery> items =
-                moimQueryRepository.findNewestForMain(PageRequest.of(0, fixedLimit));
+                moimMainRepository.findNewestForMain(PageRequest.of(0, fixedLimit));
 
         if (items.isEmpty()) return List.of();
 
@@ -116,7 +112,7 @@ public class MoimServiceImpl implements MoimService {
     @Override
     public List<MoimRecommendCardResult> recommendForMember(String memberCode) {
 
-        List<String> sigunguPriority = recommendQueryRepository
+        List<String> sigunguPriority = moimMainRepository
                 .findPreferredSigunguTop(memberCode, 30, 3)
                 .stream()
                 .map(PreferredSigunguQuery::sigungu)
@@ -124,7 +120,7 @@ public class MoimServiceImpl implements MoimService {
 
         List<RecommendedMoimBaseQuery> candidates = sigunguPriority.isEmpty()
                 ? List.of()
-                : recommendQueryRepository.findRecommendMoimCandidates(sigunguPriority, memberCode, 20);
+                : moimMainRepository.findRecommendMoimCandidates(sigunguPriority, memberCode, 20);
 
         // 폴백: 추천 후보가 없으면 최신 모임으로 대체
         if (candidates.isEmpty()) {
@@ -173,7 +169,7 @@ public class MoimServiceImpl implements MoimService {
                 .map(LikeRankQuery::targetCode)
                 .toList();
 
-        List<HotMoimCardResult> bases = hotMoimQueryRepository.findHotCardsBase(mmCodes);
+        List<HotMoimCardResult> bases = moimMainRepository.findHotCardsBase(mmCodes);
         if (bases.isEmpty()) return List.of();
 
         Map<String, HotMoimCardResult> baseMap = bases.stream()
@@ -256,13 +252,13 @@ public class MoimServiceImpl implements MoimService {
         Set<String> likedSet =
                 moimCardSupportService.getLikedMoimCodes(memberCode, moimCodes);
 
-        Set<String> preferredCategorySet = recommendQueryRepository
+        Set<String> preferredCategorySet = moimMainRepository
                 .findPreferredCategories(memberCode, 30, 5)
                 .stream()
                 .map(PreferredCategoryQuery::categoryCode)
                 .collect(Collectors.toSet());
 
-        Map<String, Set<String>> moimCategoryMap = recommendQueryRepository
+        Map<String, Set<String>> moimCategoryMap = moimMainRepository
                 .findMoimCategories(moimCodes)
                 .stream()
                 .collect(Collectors.groupingBy(
@@ -328,7 +324,7 @@ public class MoimServiceImpl implements MoimService {
     // 공통: 최신 모임 N개 조회
     // =========================
     private List<NewestMoimItemQuery> getLatestMoims(int limit) {
-        return moimQueryRepository.findNewestForMain(PageRequest.of(0, limit));
+        return moimMainRepository.findNewestForMain(PageRequest.of(0, limit));
     }
 
     // =========================
@@ -398,6 +394,8 @@ public class MoimServiceImpl implements MoimService {
     // 모임 상세 조회
     @Override
     public MoimDetailResult getMoimDetail(String moimCode, String memberCode) {
+
+        moimAccessSupportService.getAccessibleMoim(moimCode, memberCode);
 
         MoimDetailQuery detail = moimQueryRepository.findMoimDetail(moimCode);
 

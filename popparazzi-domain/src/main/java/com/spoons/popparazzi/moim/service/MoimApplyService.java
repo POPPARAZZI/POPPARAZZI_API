@@ -3,11 +3,14 @@ package com.spoons.popparazzi.moim.service;
 import com.spoons.popparazzi.common.YesNo;
 import com.spoons.popparazzi.error.exception.BusinessException;
 import com.spoons.popparazzi.moim.dto.command.ApplyMoimCommand;
+import com.spoons.popparazzi.moim.dto.query.MoimApplyInfoQuery;
+import com.spoons.popparazzi.moim.dto.result.MoimApplyInfoResult;
 import com.spoons.popparazzi.moim.entity.Moim;
 import com.spoons.popparazzi.moim.entity.MoimMemberMapping;
 import com.spoons.popparazzi.moim.error.MoimErrorCode;
 import com.spoons.popparazzi.moim.repository.MoimMemberMappingRepository;
-import com.spoons.popparazzi.moim.repository.MoimRepository;
+import com.spoons.popparazzi.moim.repository.MoimQueryRepository;
+import com.spoons.popparazzi.moim.service.support.MoimAccessSupportService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,14 +21,31 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 @Transactional
 public class MoimApplyService {
-
-    private final MoimRepository moimRepository;
+    private final MoimAccessSupportService moimAccessSupportService;
+    private final MoimQueryRepository moimQueryRepository;
     private final MoimMemberMappingRepository moimMemberMappingRepository;
 
-    public void apply(String moimCode, String memberCode, ApplyMoimCommand command) {
-        Moim moim = getMoim(moimCode);
+    // 1. 모임 신청 화면 조회
+    public MoimApplyInfoResult getApplyInfo(String moimCode, String memberCode) {
 
-        validateDeletedMoim(moim);
+        // 접근 가능 모임 검증
+        moimAccessSupportService.getAccessibleMoim(moimCode, memberCode);
+
+        MoimApplyInfoQuery query = moimQueryRepository.findApplyInfoByMoimCode(moimCode)
+                .orElseThrow(() -> new BusinessException(MoimErrorCode.MOIM_NOT_FOUND));
+
+        return new MoimApplyInfoResult(
+                query.leaderProfileImageUrl(),
+                query.leaderNickname(),
+                query.question()
+        );
+    }
+
+    // 2. 모임 신청
+    public void apply(String moimCode, String memberCode, ApplyMoimCommand command) {
+
+        Moim moim = moimAccessSupportService.getAccessibleMoim(moimCode, memberCode);
+
         validateNotLeader(moim, memberCode);
         validateMoimDate(moim);
         validateDuplicateApply(moimCode, memberCode);
@@ -35,17 +55,6 @@ public class MoimApplyService {
                 MoimMemberMapping.applicant(moimCode, memberCode, command.answer());
 
         moimMemberMappingRepository.save(mapping);
-    }
-
-    private Moim getMoim(String moimCode) {
-        return moimRepository.findByMoimCode(moimCode)
-                .orElseThrow(() -> new BusinessException(MoimErrorCode.MOIM_NOT_FOUND));
-    }
-
-    private void validateDeletedMoim(Moim moim) {
-        if (moim.getDeleteYn() != null && moim.getDeleteYn().isYes()) {
-            throw new BusinessException(MoimErrorCode.MOIM_ALREADY_DELETED);
-        }
     }
 
     private void validateNotLeader(Moim moim, String memberCode) {

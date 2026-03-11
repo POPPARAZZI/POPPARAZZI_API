@@ -1,4 +1,4 @@
-package com.spoons.popparazzi.moim.dto.query.recommend;
+package com.spoons.popparazzi.moim.dto.query.main;
 
 public record PreferredCategoryQuery(
         String categoryCode,

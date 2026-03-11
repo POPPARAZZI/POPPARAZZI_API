@@ -8,6 +8,7 @@ import com.spoons.popparazzi.moim.dto.request.ApplyMoimRequest;
 import com.spoons.popparazzi.moim.dto.request.CreateMoimRequest;
 import com.spoons.popparazzi.moim.dto.request.UpdateMoimRequest;
 import com.spoons.popparazzi.moim.dto.response.*;
+import com.spoons.popparazzi.moim.dto.result.MoimApplyInfoResult;
 import com.spoons.popparazzi.moim.dto.result.MoimDetailResult;
 import com.spoons.popparazzi.moim.error.MoimErrorCode;
 import com.spoons.popparazzi.moim.service.MoimApplyService;
@@ -144,6 +145,23 @@ public class MoimController {
                 result.extraParticipantCount(),
                 result.owner()
         );
+    }
+
+    // 2. 모임 신청 화면 조회
+    @GetMapping("/{moimCode}/apply")
+    public ApiResponse<MoimApplyInfoResponse> getMoimApplyInfo(
+            @PathVariable String moimCode,
+            @RequestHeader("X-MEMBER-CODE") String memberCode
+    ) {
+        MoimApplyInfoResult result = moimApplyService.getApplyInfo(moimCode, memberCode);
+
+        MoimApplyInfoResponse response = new MoimApplyInfoResponse(
+                result.leaderProfileImageUrl(),
+                result.leaderNickname(),
+                result.question()
+        );
+
+        return ApiResponse.success(response);
     }
 
     /*----------------------------------- 모임 CRUD -----------------------------------*/

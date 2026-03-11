@@ -4,13 +4,16 @@ import com.spoons.popparazzi.category.dto.query.MoimCategoryRow;
 import com.spoons.popparazzi.category.repository.CategoryQueryRepository;
 import com.spoons.popparazzi.like.enums.LikeType;
 import com.spoons.popparazzi.like.repository.LikeQueryRepository;
-import com.spoons.popparazzi.moim.dto.query.recommend.MoimParticipantsCountQuery;
-import com.spoons.popparazzi.moim.repository.recommend.MoimRecommendQueryRepository;
+import com.spoons.popparazzi.moim.dto.query.main.MoimParticipantsCountQuery;
+import com.spoons.popparazzi.moim.repository.MoimMainRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -19,7 +22,7 @@ import java.util.stream.Collectors;
 public class MoimCardSupportServiceImpl implements MoimCardSupportService {
 
     private final CategoryQueryRepository categoryQueryRepository;
-    private final MoimRecommendQueryRepository recommendQueryRepository;
+    private final MoimMainRepository moimMainRepository;
     private final LikeQueryRepository likeQueryRepository;
 
     @Override
@@ -53,7 +56,7 @@ public class MoimCardSupportServiceImpl implements MoimCardSupportService {
         }
 
         List<MoimParticipantsCountQuery> counts =
-                recommendQueryRepository.countApprovedParticipants(moimCodes);
+                moimMainRepository.countApprovedParticipants(moimCodes);
 
         return counts.stream()
                 .collect(Collectors.toMap(

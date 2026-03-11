@@ -1,12 +1,16 @@
-package com.spoons.popparazzi.moim.repository.recommend;
+package com.spoons.popparazzi.moim.repository;
 
 import com.querydsl.core.types.Projections;
+import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.spoons.popparazzi.category.enums.CategoryType;
 import com.spoons.popparazzi.common.YesNo;
 import com.spoons.popparazzi.like.enums.LikeType;
-import com.spoons.popparazzi.moim.dto.query.recommend.*;
+import com.spoons.popparazzi.moim.dto.query.main.*;
+import com.spoons.popparazzi.moim.dto.query.main.NewestMoimItemQuery;
+import com.spoons.popparazzi.moim.dto.result.HotMoimCardResult;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
@@ -16,15 +20,16 @@ import static com.spoons.popparazzi.category.entity.QCategoryMapping.categoryMap
 import static com.spoons.popparazzi.category.entity.QCategoryMaster.categoryMaster;
 import static com.spoons.popparazzi.like.entity.QLikeMapping.likeMapping;
 import static com.spoons.popparazzi.moim.entity.QMoim.moim;
-import static com.spoons.popparazzi.popup.entity.QPopup.popup;
 import static com.spoons.popparazzi.moim.entity.QMoimMemberMapping.moimMemberMapping;
+import static com.spoons.popparazzi.popup.entity.QPopup.popup;
 
 @Repository
 @RequiredArgsConstructor
-public class MoimRecommendQueryRepositoryImpl implements MoimRecommendQueryRepository {
+public class MoimMainRepositoryImpl implements MoimMainRepository {
 
     private final JPAQueryFactory queryFactory;
 
+    // 1. 즐겨찾기 기반 모임 추천
     /**
      * 선호 시군구 TopK
      */
@@ -176,4 +181,64 @@ public class MoimRecommendQueryRepositoryImpl implements MoimRecommendQueryRepos
                 .groupBy(moimMemberMapping.id.moimCode)
                 .fetch();
     }
+    // 2. 지금 핫한 모임 추천
+    @Override
+    public List<HotMoimCardResult> findHotCardsBase(List<String> mmCodes) {
+        if (mmCodes == null || mmCodes.isEmpty()) return List.of();
+
+        var joinedCount = new CaseBuilder()
+                .when(moimMemberMapping.joinYn.eq(YesNo.YES)).then(1)
+                .otherwise(0)
+                .sum()
+                .intValue();
+
+        return queryFactory
+                .select(Projections.constructor(
+                        HotMoimCardResult.class,
+                        moim.moimCode,
+                        moim.popupCode,
+                        moim.title,
+                        moim.date,
+                        joinedCount,
+                        moim.maxParticipants,
+                        com.querydsl.core.types.dsl.Expressions.nullExpression(String.class),
+                        com.querydsl.core.types.dsl.Expressions.constant(0L)
+                ))
+                .from(moim)
+                .leftJoin(moimMemberMapping)
+                .on(moimMemberMapping.id.moimCode.eq(moim.moimCode))
+                .where(
+                        moim.moimCode.in(mmCodes),
+                        moim.deleteYn.eq(YesNo.NO)
+                )
+                .groupBy(
+                        moim.moimCode,
+                        moim.popupCode,
+                        moim.title,
+                        moim.date,
+                        moim.maxParticipants
+                )
+                .fetch();
+    }
+
+    // 3. 신규 모임 추천
+    @Override
+    public List<NewestMoimItemQuery> findNewestForMain(Pageable pageable) {
+        return queryFactory
+                .select(Projections.constructor(
+                        NewestMoimItemQuery.class,
+                        moim.moimCode,
+                        moim.popupCode,
+                        moim.title,
+                        moim.date,
+                        moim.maxParticipants
+                ))
+                .from(moim)
+                .where(moim.deleteYn.eq(YesNo.NO))
+                .orderBy(moim.regDt.desc())
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+    }
 }
+

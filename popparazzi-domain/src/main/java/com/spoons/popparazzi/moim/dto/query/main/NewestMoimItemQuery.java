@@ -1,4 +1,4 @@
-package com.spoons.popparazzi.moim.dto.query.newest;
+package com.spoons.popparazzi.moim.dto.query.main;
 
 import java.time.LocalDateTime;
 
