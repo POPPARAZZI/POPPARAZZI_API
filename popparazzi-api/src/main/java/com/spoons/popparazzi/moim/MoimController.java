@@ -10,6 +10,7 @@ import com.spoons.popparazzi.moim.dto.request.UpdateMoimRequest;
 import com.spoons.popparazzi.moim.dto.response.*;
 import com.spoons.popparazzi.moim.dto.result.MoimApplyInfoResult;
 import com.spoons.popparazzi.moim.dto.result.MoimDetailResult;
+import com.spoons.popparazzi.moim.dto.result.MoimParticipantsResult;
 import com.spoons.popparazzi.moim.error.MoimErrorCode;
 import com.spoons.popparazzi.moim.service.MoimApplyService;
 import com.spoons.popparazzi.moim.service.MoimCommandService;
@@ -160,6 +161,19 @@ public class MoimController {
                 result.leaderNickname(),
                 result.question()
         );
+
+        return ApiResponse.success(response);
+    }
+
+    // 3. 모임 참여 멤버 목록 조회
+    @GetMapping("/{moimCode}/participants")
+    public ApiResponse<MoimParticipantsResponse> getParticipants(
+            @PathVariable String moimCode,
+            @RequestHeader("X-MEMBER-CODE") String memberCode
+    ) {
+        MoimParticipantsResult result = moimApplyService.getParticipants(moimCode, memberCode);
+
+        MoimParticipantsResponse response = MoimParticipantsResponse.from(result);
 
         return ApiResponse.success(response);
     }
