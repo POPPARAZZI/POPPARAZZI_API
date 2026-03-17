@@ -163,24 +163,6 @@ public class MoimMainRepositoryImpl implements MoimMainRepository {
                 .fetch();
     }
 
-    @Override
-    public List<MoimParticipantsCountQuery> countApprovedParticipants(List<String> moimCodes) {
-
-        return queryFactory
-                .select(Projections.constructor(
-                        MoimParticipantsCountQuery.class,
-                        moimMemberMapping.id.moimCode,
-                        moimMemberMapping.count()
-                ))
-                .from(moimMemberMapping)
-                .where(
-                        moimMemberMapping.id.moimCode.in(moimCodes),
-                        moimMemberMapping.joinYn.eq(YesNo.YES),
-                        moimMemberMapping.isApproved.isTrue()
-                )
-                .groupBy(moimMemberMapping.id.moimCode)
-                .fetch();
-    }
     // 2. 지금 핫한 모임 추천
     @Override
     public List<HotMoimCardResult> findHotCardsBase(List<String> mmCodes) {

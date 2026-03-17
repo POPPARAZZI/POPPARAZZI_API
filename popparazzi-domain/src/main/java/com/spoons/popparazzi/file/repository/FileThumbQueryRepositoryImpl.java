@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import static com.spoons.popparazzi.file.entity.QFileMaster.fileMaster;
 
@@ -30,9 +31,9 @@ public class FileThumbQueryRepositoryImpl implements FileThumbQueryRepository {
         return queryFactory
                 .select(Projections.constructor(
                         FileThumbQuery.class,
-                        fileMaster.parentCode,  // String parentCode
-                        fileMaster.fmSeq,        // Long fileSeq
-                        fileMaster.url           // String url
+                        fileMaster.parentCode,
+                        fileMaster.fmSeq,
+                        fileMaster.url
                 ))
                 .from(fileMaster)
                 .where(
@@ -46,10 +47,47 @@ public class FileThumbQueryRepositoryImpl implements FileThumbQueryRepository {
                                         .where(
                                                 f2.fmType.eq(fileMaster.fmType),
                                                 f2.parentCode.eq(fileMaster.parentCode),
-                                                f2.deleteYn.eq(YesNo.NO) // ✅ 서브쿼리도 삭제 제외
+                                                f2.deleteYn.eq(YesNo.NO)
                                         )
                         )
                 )
                 .fetch();
+    }
+
+    // 2. 단건 대표 썸네일
+    @Override
+    public Optional<FileThumbQuery> findFirstThumb(FileType type, String parentCode) {
+        if (type == null || parentCode == null || parentCode.isBlank()) {
+            return Optional.empty();
+        }
+
+        var f2 = new QFileMaster("f2");
+
+        FileThumbQuery result = queryFactory
+                .select(Projections.constructor(
+                        FileThumbQuery.class,
+                        fileMaster.parentCode,
+                        fileMaster.fmSeq,
+                        fileMaster.url
+                ))
+                .from(fileMaster)
+                .where(
+                        fileMaster.fmType.eq(type),
+                        fileMaster.parentCode.eq(parentCode),
+                        fileMaster.deleteYn.eq(YesNo.NO),
+                        fileMaster.fmSeq.eq(
+                                JPAExpressions
+                                        .select(f2.fmSeq.min())
+                                        .from(f2)
+                                        .where(
+                                                f2.fmType.eq(fileMaster.fmType),
+                                                f2.parentCode.eq(fileMaster.parentCode),
+                                                f2.deleteYn.eq(YesNo.NO)
+                                        )
+                        )
+                )
+                .fetchOne();
+
+        return Optional.ofNullable(result);
     }
 }

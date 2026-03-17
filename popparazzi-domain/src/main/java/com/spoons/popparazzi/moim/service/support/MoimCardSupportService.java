@@ -14,4 +14,7 @@ public interface MoimCardSupportService {
 
     // liked moimCode Set
     Set<String> getLikedMoimCodes(String memberCode, List<String> moimCodes);
+
+    // moimCode → 참여자 프로필 이미지 URL 최대 2개
+    Map<String, List<String>> getParticipantProfileUrls(List<String> moimCodes);
 }

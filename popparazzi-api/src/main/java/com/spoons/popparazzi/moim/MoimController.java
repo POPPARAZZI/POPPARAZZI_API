@@ -4,17 +4,20 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.spoons.popparazzi.error.exception.BusinessException;
 import com.spoons.popparazzi.moim.dto.command.ApplyMoimCommand;
+import com.spoons.popparazzi.moim.dto.command.MoimSearchCommand;
 import com.spoons.popparazzi.moim.dto.request.ApplyMoimRequest;
 import com.spoons.popparazzi.moim.dto.request.CreateMoimRequest;
+import com.spoons.popparazzi.moim.dto.request.MoimSearchRequest;
 import com.spoons.popparazzi.moim.dto.request.UpdateMoimRequest;
 import com.spoons.popparazzi.moim.dto.response.*;
-import com.spoons.popparazzi.moim.dto.result.MoimApplyInfoResult;
-import com.spoons.popparazzi.moim.dto.result.MoimDetailResult;
-import com.spoons.popparazzi.moim.dto.result.MoimParticipantsResult;
+import com.spoons.popparazzi.moim.dto.result.*;
 import com.spoons.popparazzi.moim.error.MoimErrorCode;
 import com.spoons.popparazzi.moim.service.MoimApplyService;
 import com.spoons.popparazzi.moim.service.MoimCommandService;
+import com.spoons.popparazzi.moim.service.MoimSearchService;
 import com.spoons.popparazzi.moim.service.MoimService;
+import com.spoons.popparazzi.popup.dto.response.PopupSearchMatchResponse;
+import com.spoons.popparazzi.popup.dto.result.PopupSearchMatchResult;
 import com.spoons.popparazzi.response.ApiResponse;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Valid;
@@ -38,6 +41,7 @@ public class MoimController {
     private final MoimService moimService;
     private final MoimCommandService moimCommandService;
     private final MoimApplyService moimApplyService;
+    private final MoimSearchService moimSearchService;
     private final Validator validator;
 
     /*----------------------------------- 모임 메인 -----------------------------------*/
@@ -178,6 +182,67 @@ public class MoimController {
         return ApiResponse.success(response);
     }
 
+    /*----------------------------------- 모임 검색 -----------------------------------*/
+    @PostMapping("/search")
+    public ApiResponse<MoimSearchResponse> searchMoims(
+            @RequestHeader("X-MEMBER-CODE") String memberCode,
+            @RequestBody MoimSearchRequest request
+    ) {
+        MoimSearchCommand command = new MoimSearchCommand(
+                memberCode,
+                request.getKeyword(),
+                request.getPaginationInfo()
+        );
+
+        MoimSearchResult result = moimSearchService.searchMoims(command);
+
+        MoimSearchResponse response = new MoimSearchResponse(
+                result.keyword(),
+                toPopupResponse(result.matchedPopup()),
+                toItemResponses(result.moims()),
+                result.currentPage(),
+                result.recordCountPerPage(),
+                result.totalRecord(),
+                result.totalPage()
+        );
+
+        return ApiResponse.success(response);
+    }
+
+    private PopupSearchMatchResponse toPopupResponse(PopupSearchMatchResult popup) {
+        if (popup == null) {
+            return null;
+        }
+
+        return new PopupSearchMatchResponse(
+                popup.popupCode(),
+                popup.thumbnailUrl(),
+                popup.title(),
+                popup.address(),
+                popup.startDt(),
+                popup.endDt(),
+                popup.likeCount(),
+                popup.viewCount()
+        );
+    }
+
+    private List<MoimSearchItemResponse> toItemResponses(List<MoimSearchCardResult> cards) {
+        return cards.stream()
+                .map(card -> new MoimSearchItemResponse(
+                        card.moimCode(),
+                        card.thumbnailUrl(),
+                        card.liked(),
+                        card.categories(),
+                        card.title(),
+                        card.address(),
+                        card.participantProfileUrls(),
+                        card.leaderNickname(),
+                        card.currentCount(),
+                        card.maxCount(),
+                        card.closingSoon()
+                ))
+                .toList();
+    }
     /*----------------------------------- 모임 CRUD -----------------------------------*/
     // 1. 모임 생성
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

@@ -9,7 +9,9 @@ import com.spoons.popparazzi.common.YesNo;
 import com.spoons.popparazzi.member.entity.QMember;
 import com.spoons.popparazzi.moim.dto.query.MoimApplyInfoQuery;
 import com.spoons.popparazzi.moim.dto.query.MoimDetailQuery;
+import com.spoons.popparazzi.moim.dto.query.MoimParticipantProfileQuery;
 import com.spoons.popparazzi.moim.dto.query.MoimParticipantQuery;
+import com.spoons.popparazzi.moim.dto.query.main.MoimParticipantsCountQuery;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -105,4 +107,57 @@ public class MoimQueryRepositoryImpl implements MoimQueryRepository {
                 .fetch();
     }
 
+    // 4. 여러 모임의 승인 완료 참여자 수 집계
+    @Override
+    public List<MoimParticipantsCountQuery> countApprovedParticipants(List<String> moimCodes) {
+
+        return queryFactory
+                .select(Projections.constructor(
+                        MoimParticipantsCountQuery.class,
+                        moimMemberMapping.id.moimCode,
+                        moimMemberMapping.count()
+                ))
+                .from(moimMemberMapping)
+                .where(
+                        moimMemberMapping.id.moimCode.in(moimCodes),
+                        moimMemberMapping.joinYn.eq(YesNo.YES),
+                        moimMemberMapping.isApproved.isTrue()
+                )
+                .groupBy(moimMemberMapping.id.moimCode)
+                .fetch();
+    }
+
+    // 5. 여러 모임의 참여자 프로필 URL 조회 (최대 2명)
+    @Override
+    public List<MoimParticipantProfileQuery> findParticipantProfiles(List<String> moimCodes) {
+        if (moimCodes == null || moimCodes.isEmpty()) {
+            return List.of();
+        }
+
+        NumberExpression<Integer> leaderOrder = new CaseBuilder()
+                .when(member.memberCode.eq(moim.leaderMemberCode)).then(1)
+                .otherwise(0);
+
+        return queryFactory
+                .select(Projections.constructor(
+                        MoimParticipantProfileQuery.class,
+                        moimMemberMapping.id.moimCode,
+                        member.profileUrl
+                ))
+                .from(moimMemberMapping)
+                .join(member).on(moimMemberMapping.id.memberCode.eq(member.memberCode))
+                .join(moim).on(moimMemberMapping.id.moimCode.eq(moim.moimCode))
+                .where(
+                        moimMemberMapping.id.moimCode.in(moimCodes),
+                        moimMemberMapping.joinYn.eq(YesNo.YES),
+                        moimMemberMapping.isApproved.isTrue(),
+                        moim.deleteYn.eq(YesNo.NO)
+                )
+                .orderBy(
+                        moimMemberMapping.id.moimCode.asc(),
+                        leaderOrder.desc(),
+                        member.nickname.asc()
+                )
+                .fetch();
+    }
 }

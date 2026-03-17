@@ -28,7 +28,12 @@ public enum MoimErrorCode implements ErrorCode {
     // 모임 삭제
     // =========================
     MOIM_DELETE_FORBIDDEN(-2008, "모임 작성자만 삭제할 수 있습니다.", "MOIM"),
-    MOIM_DELETE_NOT_ALLOWED_ON_EVENT_DAY(-2009, "모임 당일에는 삭제할 수 없습니다.", "MOIM");
+    MOIM_DELETE_NOT_ALLOWED_ON_EVENT_DAY(-2009, "모임 당일에는 삭제할 수 없습니다.", "MOIM"),
+
+    // =========================
+    // 모임 검색
+    // =========================
+    INVALID_SEARCH_KEYWORD(-2010, "잘못된 검색 키워드입니다.","MOIM");
 
     private final int code;
     private final String message;

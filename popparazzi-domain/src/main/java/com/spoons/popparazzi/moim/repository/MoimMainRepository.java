@@ -50,17 +50,9 @@ public interface MoimMainRepository {
             List<String> moimCodes
     );
 
-    /**
-     * 후보 모임들의 현재 참여 인원을 집계한다.
-     * - joinYn = 'Y'
-     * - isApproved = true
-     */
-    List<MoimParticipantsCountQuery> countApprovedParticipants(List<String> moimCodes);
-
     // 2. 지금 핫한 모임 추천
     List<HotMoimCardResult> findHotCardsBase(List<String> mmCodes);
 
     // 3. 신규 모임 추천
-    // 1. 메인 - 신규 모임 조회
     List<NewestMoimItemQuery> findNewestForMain(Pageable pageable);
 }
