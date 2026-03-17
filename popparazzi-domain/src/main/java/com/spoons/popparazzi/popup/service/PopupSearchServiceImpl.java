@@ -3,10 +3,13 @@ package com.spoons.popparazzi.popup.service;
 import com.spoons.popparazzi.file.dto.query.FileThumbQuery;
 import com.spoons.popparazzi.file.enums.FileType;
 import com.spoons.popparazzi.file.repository.FileThumbQueryRepository;
+import com.spoons.popparazzi.like.enums.LikeType;
+import com.spoons.popparazzi.like.repository.LikeRepository;
 import com.spoons.popparazzi.popup.dto.command.PopupSearchMatchCommand;
 import com.spoons.popparazzi.popup.dto.query.PopupSearchMatchQuery;
 import com.spoons.popparazzi.popup.dto.result.PopupSearchMatchResult;
 import com.spoons.popparazzi.popup.repository.PopupSearchQueryRepository;
+import com.spoons.popparazzi.popup.repository.PopupViewHistoryQueryRepository;
 import com.spoons.popparazzi.util.SearchKeywordNormalizer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -19,6 +22,8 @@ public class PopupSearchServiceImpl implements PopupSearchService {
 
     private final PopupSearchQueryRepository popupSearchQueryRepository;
     private final FileThumbQueryRepository fileThumbQueryRepository;
+    private final PopupViewHistoryQueryRepository popupViewHistoryQueryRepository;
+    private final LikeRepository likeRepository;
 
     @Override
     public PopupSearchMatchResult findBestMatch(PopupSearchMatchCommand command) {
@@ -32,11 +37,12 @@ public class PopupSearchServiceImpl implements PopupSearchService {
     private PopupSearchMatchResult toResult(PopupSearchMatchQuery query) {
         String thumbnailUrl = findPopupThumbnail(query.popupCode());
 
-        // TODO: 팝업 좋아요 로직 추가 후 교체
-        long likeCount = 0L;
+        long likeCount = likeRepository.countByTargetCodeAndType(
+                query.popupCode(),
+                LikeType.P
+        );
 
-        // TODO: 팝업 조회수 로직 추가 후 교체
-        long viewCount = 0L;
+        long viewCount = popupViewHistoryQueryRepository.countViews(query.popupCode());
 
         return new PopupSearchMatchResult(
                 query.popupCode(),
