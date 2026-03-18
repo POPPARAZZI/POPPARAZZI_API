@@ -1,6 +1,6 @@
 package com.spoons.popparazzi.jwt.service;
 
-import com.spoons.popparazzi.auth.repository.MemberRepository;
+import com.spoons.popparazzi.auth.repository.memberJpaRepository;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -34,7 +34,7 @@ public class JwtService {
     private final Key SECRET_KEY;
     private final Key REFRESH_SECRET_KEY;
 
-    private final MemberRepository memberRepository;
+    private final memberJpaRepository memberRepository;
     private final DeviceService deviceService;
 
     private static final String ACCESS_TOKEN_SUBJECT = "AccessToken";
@@ -44,7 +44,7 @@ public class JwtService {
 
 
     public JwtService(@Value("${jwt.secret}") String secretKey, @Value("${jwt.secret-secret}") String refreshSecretKey,
-                      MemberRepository memberRepository, DeviceService deviceService) {
+                      memberJpaRepository memberRepository, DeviceService deviceService) {
         this.memberRepository = memberRepository;
         this.deviceService = deviceService;
 
