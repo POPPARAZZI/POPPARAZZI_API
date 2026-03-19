@@ -3,7 +3,7 @@ package com.spoons.popparazzi.auth.service;
 import com.spoons.popparazzi.auth.command.MemberSignupCommand;
 import com.spoons.popparazzi.auth.entity.Member;
 import com.spoons.popparazzi.auth.entity.enums.SnsType;
-import com.spoons.popparazzi.auth.repository.memberJpaRepository;
+import com.spoons.popparazzi.auth.repository.MemberJpaRepository;
 import com.spoons.popparazzi.error.exception.BusinessException;
 import com.spoons.popparazzi.seq.service.SeqService;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +17,7 @@ import static com.spoons.popparazzi.auth.error.MemberErrorCode.ALREADY_SIGNUP;
 @RequiredArgsConstructor
 public class MemberServiceImpl implements MemberService{
 
-    private final memberJpaRepository memberJpaRepository;
+    private final MemberJpaRepository memberJpaRepository;
 
     private final SeqService seqService;
 
