@@ -52,6 +52,7 @@ public class MoimSearchServiceImpl implements MoimSearchService {
         paginationInfo.setTotalRecord(Math.toIntExact(totalCount));
         paginationInfo.pageInit();
 
+        // 상단 팝업은 존재하지만, 모임은 존재하지 않을 수 있음
         if (totalCount == 0) {
             return new MoimSearchResult(
                     command.keyword(),
@@ -79,6 +80,7 @@ public class MoimSearchServiceImpl implements MoimSearchService {
             );
         }
 
+        // bulk 조회
         List<String> moimCodes = items.stream()
                 .map(MoimSearchItemQuery::moimCode)
                 .toList();
@@ -132,12 +134,14 @@ public class MoimSearchServiceImpl implements MoimSearchService {
         );
     }
 
+    // 검색어 검증
     private void validateKeyword(String keyword) {
         if (!SearchKeywordNormalizer.isValidLength(keyword)) {
             throw new BusinessException(MoimErrorCode.INVALID_SEARCH_KEYWORD);
         }
     }
 
+    // 페이징 정보
     private PaginationInfo getOrCreatePagination(PaginationInfo paginationInfo) {
         if (paginationInfo != null) {
             return paginationInfo;
@@ -149,6 +153,7 @@ public class MoimSearchServiceImpl implements MoimSearchService {
         return defaultPagination;
     }
 
+    // 마감 임박 계산 (5명 이하 : 1자리, 6명 이상 : 2자리)
     private boolean isClosingSoon(int currentCount, int maxCount) {
         if (maxCount <= 0) {
             return false;
@@ -163,6 +168,7 @@ public class MoimSearchServiceImpl implements MoimSearchService {
         return remainCount <= 2;
     }
 
+    // 썸네일 조회용 타겟 리스트 변환
     private <T> List<MoimThumbTarget> toThumbTargets(
             List<T> items,
             Function<T, String> moimCodeGetter,

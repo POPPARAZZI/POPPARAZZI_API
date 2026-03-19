@@ -11,19 +11,23 @@ import com.spoons.popparazzi.like.dto.query.LikeRankQuery;
 import com.spoons.popparazzi.like.enums.LikeType;
 import com.spoons.popparazzi.like.repository.LikeQueryRepository;
 import com.spoons.popparazzi.like.repository.LikeRepository;
+import com.spoons.popparazzi.moim.dto.command.MoimFilterCommand;
 import com.spoons.popparazzi.moim.dto.query.MoimDetailQuery;
+import com.spoons.popparazzi.moim.dto.query.MoimFilterItemQuery;
 import com.spoons.popparazzi.moim.dto.query.main.*;
 import com.spoons.popparazzi.moim.dto.result.*;
+import com.spoons.popparazzi.moim.enums.MoimViewType;
 import com.spoons.popparazzi.moim.error.MoimErrorCode;
+import com.spoons.popparazzi.moim.repository.MoimFilterQueryRepository;
 import com.spoons.popparazzi.moim.repository.MoimMainRepository;
 import com.spoons.popparazzi.moim.repository.MoimMemberMappingRepository;
 import com.spoons.popparazzi.moim.repository.MoimQueryRepository;
-import com.spoons.popparazzi.moim.repository.MoimRepository;
 import com.spoons.popparazzi.moim.service.support.MoimAccessSupportService;
 import com.spoons.popparazzi.moim.service.support.MoimCardSupportService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -45,18 +49,19 @@ public class MoimServiceImpl implements MoimService {
     private static final int HOT_DEFAULT_LIMIT = 10;
     private static final int LIMIT_MAX = 50;
 
-    private final MoimRepository moimRepository;
     private final MoimQueryRepository moimQueryRepository;
     private final MoimMainRepository moimMainRepository;
-
+    private final MoimMemberMappingRepository moimMemberMappingRepository;
+    private final MoimFilterQueryRepository moimFilterQueryRepository;
+    private final FileQueryRepository fileQueryRepository;
+    private final LikeRepository likeRepository;
     private final LikeQueryRepository likeQueryRepository;
+
     private final MoimCardSupportService moimCardSupportService;
     private final MoimAccessSupportService moimAccessSupportService;
     private final FileThumbnailService fileThumbnailService;
 
-    private final FileQueryRepository fileQueryRepository;
-    private final LikeRepository likeRepository;
-    private final MoimMemberMappingRepository moimMemberMappingRepository;
+
 
 
     // =========================
@@ -452,5 +457,104 @@ public class MoimServiceImpl implements MoimService {
                 query.fileSeq(),
                 query.url()
         );
+    }
+
+    // 모임 필터링 조회
+    @Override
+    public MoimFilterSliceResult getMoimsByFilter(MoimFilterCommand command) {
+        Slice<MoimFilterItemQuery> slice = moimFilterQueryRepository.searchMoimsByFilter(command);
+
+        // HOT / FAVORITE 폴백
+        if (slice.isEmpty() && shouldFallbackToNew(command)) {
+            MoimFilterCommand fallbackCommand = MoimFilterCommand.builder()
+                    .memberCode(command.getMemberCode())
+                    .viewType(MoimViewType.NEW)
+                    .sido(command.getSido())
+                    .sigungu(command.getSigungu())
+                    .date(command.getDate())
+                    .categoryCodes(command.getCategoryCodes())
+                    .page(command.getPage())
+                    .size(command.getSize())
+                    .build();
+
+            slice = moimFilterQueryRepository.searchMoimsByFilter(fallbackCommand);
+        }
+
+        if (slice.isEmpty()) {
+            return new MoimFilterSliceResult(
+                    List.of(),
+                    command.getPage(),
+                    command.getSize(),
+                    false
+            );
+        }
+
+        List<MoimFilterItemQuery> items = slice.getContent();
+
+        List<String> moimCodes = items.stream()
+                .map(MoimFilterItemQuery::moimCode)
+                .toList();
+
+        Set<String> likedSet = getLikedMoimCodes(command.getMemberCode(), moimCodes);
+        Map<String, List<String>> categoryMap = moimCardSupportService.getMoimCategories(moimCodes);
+        Map<String, Integer> participantMap = moimCardSupportService.getParticipantCounts(moimCodes);
+
+        Map<String, String> thumbMap = fileThumbnailService.getMoimThumbsWithPopupFallback(
+                toThumbTargetsForFilter(items)
+        );
+
+        List<MoimFilterResult> results = items.stream()
+                .map(item -> {
+                    int participantCount = participantMap.getOrDefault(item.moimCode(), 0);
+                    int maxParticipantCount = item.maxParticipantCount() != null ? item.maxParticipantCount() : 0;
+                    boolean isFull = participantCount >= maxParticipantCount;
+
+                    return new MoimFilterResult(
+                            item.moimCode(),
+                            thumbMap.get(item.moimCode()),
+                            item.title(),
+                            categoryMap.getOrDefault(item.moimCode(), List.of()),
+                            item.address(),
+                            item.moimDate(),
+                            item.leaderNickname(),
+                            participantCount,
+                            maxParticipantCount,
+                            isFull,
+                            likedSet.contains(item.moimCode())
+                    );
+                })
+                .toList();
+
+        return new MoimFilterSliceResult(
+                results,
+                slice.getNumber(),
+                slice.getSize(),
+                slice.hasNext()
+        );
+    }
+
+    private boolean shouldFallbackToNew(MoimFilterCommand command) {
+        return command.getViewType() == MoimViewType.HOT
+                || command.getViewType() == MoimViewType.FAVORITE;
+    }
+
+    private Set<String> getLikedMoimCodes(String memberCode, List<String> moimCodes) {
+        if (memberCode == null || memberCode.isBlank()) {
+            return Set.of();
+        }
+        if (moimCodes == null || moimCodes.isEmpty()) {
+            return Set.of();
+        }
+        return moimCardSupportService.getLikedMoimCodes(memberCode, moimCodes);
+    }
+
+    private List<MoimThumbTarget> toThumbTargetsForFilter(List<MoimFilterItemQuery> items) {
+        if (items == null || items.isEmpty()) {
+            return List.of();
+        }
+
+        return items.stream()
+                .map(item -> new MoimThumbTarget(item.moimCode(), item.popupCode()))
+                .toList();
     }
 }

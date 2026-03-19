@@ -1,9 +1,7 @@
 package com.spoons.popparazzi.moim.service;
 
-import com.spoons.popparazzi.moim.dto.result.HotMoimCardResult;
-import com.spoons.popparazzi.moim.dto.result.MoimDetailResult;
-import com.spoons.popparazzi.moim.dto.result.MoimRecommendCardResult;
-import com.spoons.popparazzi.moim.dto.result.NewestMoimCardResult;
+import com.spoons.popparazzi.moim.dto.command.MoimFilterCommand;
+import com.spoons.popparazzi.moim.dto.result.*;
 
 import java.util.List;
 
@@ -20,5 +18,9 @@ public interface MoimService {
 
     // 모임 상세 조회
     MoimDetailResult getMoimDetail(String moimCode, String memberCode);
+
+    // 모임 필터링 조회
+    MoimFilterSliceResult getMoimsByFilter(MoimFilterCommand command);
+
 }
 

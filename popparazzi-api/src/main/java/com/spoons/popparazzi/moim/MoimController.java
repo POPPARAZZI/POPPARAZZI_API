@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.spoons.popparazzi.error.exception.BusinessException;
 import com.spoons.popparazzi.moim.dto.command.ApplyMoimCommand;
+import com.spoons.popparazzi.moim.dto.command.MoimFilterCommand;
 import com.spoons.popparazzi.moim.dto.command.MoimSearchCommand;
 import com.spoons.popparazzi.moim.dto.request.ApplyMoimRequest;
 import com.spoons.popparazzi.moim.dto.request.CreateMoimRequest;
@@ -11,6 +12,7 @@ import com.spoons.popparazzi.moim.dto.request.MoimSearchRequest;
 import com.spoons.popparazzi.moim.dto.request.UpdateMoimRequest;
 import com.spoons.popparazzi.moim.dto.response.*;
 import com.spoons.popparazzi.moim.dto.result.*;
+import com.spoons.popparazzi.moim.enums.MoimViewType;
 import com.spoons.popparazzi.moim.error.MoimErrorCode;
 import com.spoons.popparazzi.moim.service.MoimApplyService;
 import com.spoons.popparazzi.moim.service.MoimCommandService;
@@ -28,6 +30,7 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
 
@@ -178,6 +181,57 @@ public class MoimController {
         MoimParticipantsResult result = moimApplyService.getParticipants(moimCode, memberCode);
 
         MoimParticipantsResponse response = MoimParticipantsResponse.from(result);
+
+        return ApiResponse.success(response);
+    }
+
+    // 4. 모임 필터링 조회
+    @GetMapping
+    public ApiResponse<MoimFilterSliceResponse> getMoimsByFilter(
+            @RequestHeader(value = "X-MEMBER-CODE", required = false) String memberCode,
+            @RequestParam MoimViewType viewType,
+            @RequestParam(required = false) String sido,
+            @RequestParam(required = false) String sigungu,
+            @RequestParam(required = false) LocalDate date,
+            @RequestParam(required = false) List<String> categoryCodes,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        MoimFilterCommand command = MoimFilterCommand.builder()
+                .memberCode(memberCode)
+                .viewType(viewType)
+                .sido(sido)
+                .sigungu(sigungu)
+                .date(date)
+                .categoryCodes(categoryCodes)
+                .page(page)
+                .size(size)
+                .build();
+
+        MoimFilterSliceResult result = moimService.getMoimsByFilter(command);
+
+        List<MoimFilterItemResponse> content = result.content().stream()
+                .map(it -> new MoimFilterItemResponse(
+                        it.moimCode(),
+                        it.thumbnailUrl(),
+                        it.title(),
+                        it.categoryNames(),
+                        it.address(),
+                        it.moimDate(),
+                        it.leaderNickname(),
+                        it.participantCount(),
+                        it.maxParticipantCount(),
+                        it.isFull(),
+                        it.isLiked()
+                ))
+                .toList();
+
+        MoimFilterSliceResponse response = new MoimFilterSliceResponse(
+                content,
+                result.page(),
+                result.size(),
+                result.hasNext()
+        );
 
         return ApiResponse.success(response);
     }
