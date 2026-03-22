@@ -1,7 +1,6 @@
 package com.spoons.popparazzi.jwt.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import com.spoons.popparazzi.error.code.CommonErrorCode;
 import com.spoons.popparazzi.response.ApiResponse;
 import jakarta.servlet.http.HttpServletRequest;

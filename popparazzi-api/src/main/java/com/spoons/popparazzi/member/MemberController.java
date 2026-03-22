@@ -1,23 +1,8 @@
-package com.spoons.popparazzi.auth;
+/*
+package com.spoons.popparazzi.member;
 
 import jakarta.validation.Valid;
-import kr.co.hs.domain.modules.member.application.MemberService;
-import kr.co.hs.domain.modules.member.domain.constant.ProviderType;
-import kr.co.hs.domain.modules.member.domain.constant.RoleType;
-import kr.co.hs.domain.modules.member.domain.constant.Status;
-import kr.co.hs.domain.modules.member.domain.model.Member;
-import kr.co.hs.domain.modules.member.infrastructure.dto.request.MemberIdCheckRequest;
-import kr.co.hs.domain.modules.member.infrastructure.dto.request.MemberUpdate;
-import kr.co.hs.domain.modules.member.infrastructure.dto.response.AdminDetail;
-import kr.co.hs.domain.modules.member.infrastructure.dto.response.MemberDetail;
-import kr.co.hs.domain.modules.member.infrastructure.dto.response.MemberResponseDTO;
-import kr.co.hs.domain.modules.memberAuth.domain.model.VerifyCode;
-import kr.co.hs.server.common.HttpResData;
-import kr.co.hs.server.common.MemberData;
-import kr.co.hs.server.member.model.view.StatusChangeVO;
-import kr.co.hs.util.exception.EmailException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,7 +10,6 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.util.Optional;
 
-import static kr.co.hs.domain.modules.member.domain.constant.ProviderType.LOCAL;
 
 
 @RestController
@@ -35,7 +19,9 @@ public class MemberController {
 
     private final MemberService memberService;
 
-    /* 아이디 찾기  - 인증코드 전송*/
+    */
+/* 아이디 찾기  - 인증코드 전송*//*
+
     @PostMapping("/find-id-verification")
     public ResponseEntity<HttpResData<String>> searchId (@RequestBody @Valid final MemberIdCheckRequest request) {
 
@@ -52,7 +38,9 @@ public class MemberController {
         return ResponseEntity.ok(HttpResData.success("이메일 전송이 완료되었습니다."));
     }
 
-    /* 아이디 찾기 - 아이디 받기*/
+    */
+/* 아이디 찾기 - 아이디 받기*//*
+
     @GetMapping("find-id")
     public ResponseEntity<HttpResData<String>> findId(@RequestParam @Valid final String email,
                                                       @RequestParam @Valid final String memberName) {
@@ -61,7 +49,9 @@ public class MemberController {
         return ResponseEntity.ok(HttpResData.success(memberId));
     }
 
-    /* 비밀번호 찾기 */
+    */
+/* 비밀번호 찾기 *//*
+
     @GetMapping("/find-password-pre")
     public ResponseEntity<HttpResData<String>> findPasswordUrl(@RequestParam @Valid final String memberId,
                                                                @RequestParam @Valid final String memberName) {
@@ -97,7 +87,9 @@ public class MemberController {
 
     }
 
-    /* 아이디 중복 검사 */
+    */
+/* 아이디 중복 검사 *//*
+
     @GetMapping("/duplicate-id")
     public ResponseEntity<HttpResData<String>> duplicateId (@RequestParam @Valid  String memberId) {
         boolean has = memberService.duplicateId( memberId );
@@ -108,7 +100,9 @@ public class MemberController {
         }
     }
 
-    /* 이메일 인증 */
+    */
+/* 이메일 인증 *//*
+
     @PostMapping("/emails/verification-requests")
     public ResponseEntity<HttpResData<?>> emailVerificationRequests(@RequestBody @Valid final MemberIdCheckRequest email) {
         try {
@@ -120,14 +114,18 @@ public class MemberController {
         }
     }
 
-    /* 인증 코드 검증 */
+    */
+/* 인증 코드 검증 *//*
+
     @PostMapping("/verifications")
     public ResponseEntity<HttpResData<?>> emailVerifications(@RequestBody @Valid final VerifyCode request) {
         memberService.verifiedCode(request);
         return ResponseEntity.ok(HttpResData.success("ok"));
     }
 
-    /* 회원 조회 */
+    */
+/* 회원 조회 *//*
+
     @GetMapping("/member-list")
     public ResponseEntity<HttpResData<PageImpl<MemberResponseDTO>>> getMemberList(
             @RequestParam Optional<Integer> page,
@@ -141,14 +139,18 @@ public class MemberController {
         return ResponseEntity.ok(HttpResData.success(result));
     }
 
-    /* 회원 상세 조회 */
+    */
+/* 회원 상세 조회 *//*
+
     @GetMapping("/member-detail/{memberCode}")
     public ResponseEntity<HttpResData<MemberDetail>> getMemberDetail(@PathVariable String memberCode) {
         MemberDetail result = memberService.getMemberDetail(memberCode);
         return ResponseEntity.ok(HttpResData.success(result));
     }
 
-    /* 내 정보 조회 */
+    */
+/* 내 정보 조회 *//*
+
     @GetMapping("/my-profile")
     public ResponseEntity<HttpResData<MemberResponseDTO>> myProfile() throws Exception {
         String memberCode = MemberData.build();
@@ -157,7 +159,9 @@ public class MemberController {
         return ResponseEntity.ok(HttpResData.success(memberResponse));
     }
 
-    /* 회원 정보 수정 */
+    */
+/* 회원 정보 수정 *//*
+
     @PostMapping("/profile-update/{memberCode}")
     public ResponseEntity<HttpResData<?>> myProfileUpdate(@RequestBody MemberUpdate request, @PathVariable String memberCode) throws Exception {
 
@@ -170,7 +174,9 @@ public class MemberController {
         return ResponseEntity.ok(HttpResData.success("정보가 수정되었습니다."));
     }
 
-    /* 이용 상태 변경 */
+    */
+/* 이용 상태 변경 *//*
+
     @PostMapping("/status-change")
     public ResponseEntity<HttpResData<String>> statusChange(@RequestBody StatusChangeVO statusChangeVO) {
 
@@ -187,7 +193,9 @@ public class MemberController {
         return ResponseEntity.ok(HttpResData.success("이용상태가 수정되었습니다."));
     }
 
-    /* 관리자 조회 */
+    */
+/* 관리자 조회 *//*
+
     @GetMapping("/admin-list")
     public ResponseEntity<HttpResData<PageImpl<MemberResponseDTO>>> getAdminList(
             @RequestParam Optional<Integer> page,
@@ -199,7 +207,9 @@ public class MemberController {
         return ResponseEntity.ok(HttpResData.success(result));
     }
 
-    /* 관리자 상세 조회 */
+    */
+/* 관리자 상세 조회 *//*
+
     @GetMapping("/admin/{memberCode}")
     public ResponseEntity<HttpResData<AdminDetail>> getAdmin(@PathVariable String memberCode) {
 
@@ -208,7 +218,9 @@ public class MemberController {
         return ResponseEntity.ok(HttpResData.success(result));
     }
 
-    /* 회원 탈퇴 */
+    */
+/* 회원 탈퇴 *//*
+
     @PostMapping("/sign-out")
     public ResponseEntity<HttpResData<String>> signOut() {
         String memberCode = MemberData.build();
@@ -218,7 +230,9 @@ public class MemberController {
         return ResponseEntity.ok(HttpResData.success("정상적으로 탈퇴 되었습니다."));
     }
 
-    /* provider 체크 */
+    */
+/* provider 체크 *//*
+
     @GetMapping("/provider-check")
     public ResponseEntity<HttpResData<String>> getProvider() {
         String memberCode = MemberData.build();
@@ -228,3 +242,4 @@ public class MemberController {
 
 
 }
+*/

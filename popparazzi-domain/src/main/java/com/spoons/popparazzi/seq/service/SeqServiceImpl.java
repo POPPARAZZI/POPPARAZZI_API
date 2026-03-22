@@ -28,7 +28,7 @@ public class SeqServiceImpl implements SeqService{
             ((Moim) vo).setMM_CODE(code);
         } else if (vo instanceof Member) {
             String code = seqRepository.getUniqueCode("MEMBER", "TMM");
-            ((Member) vo).assignCode(code);
+            ((Member) vo).setMemberCode(code);
         }
 
         return vo;

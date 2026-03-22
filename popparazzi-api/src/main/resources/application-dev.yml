@@ -17,9 +17,10 @@ logging:
 
 # jwt secret key 설정
 jwt:
-  secret: nLTft3rpggbZvFSiSMN7wYyvmW7pApWpNAQsdl0WUtg=
-  access-token-expiration: 3600000
-  refresh-secret: C3insT0E5lSEJghgU4hfBEUhzcseBNQt/RJtT2LOKY4=
+  secret: tXH4oSUvKk1zrckq+Ls/PR8yQ2K6iGHf2BhnfzLAiCoVxgd8/Wz37LL+MC1vHeBSPnKWi3ZfJi+BWhM+N5BF+w=
+ # access-token-expiration: 3600000
+  access-token-expiration: 1209600000
+  refresh-secret: hH12r/BTBOka1zPknSW0XW9N9EExXM3PcxLrOMN4ruLG+SVW6p8JS/BmDaVB9uQqVB9izvovoJrXqWgddG5yxA==
   refresh-token-expiration: 1209600000
 
 # 암호화
@@ -36,7 +37,7 @@ spring:
       on-profile: dev
   datasource:
     driver-class-name: net.sf.log4jdbc.sql.jdbcapi.DriverSpy
-    url: jdbc:log4jdbc:postgresql://aws-1-ap-northeast-2.pooler.supabase.com:6543/postgres
+    url: jdbc:log4jdbc:postgresql://aws-1-ap-northeast-2.pooler.supabase.com:6543/postgres?prepareThreshold=0
     username: postgres.vjeftabbisgxwapfikgi
     password: '!tmvnswm123'
     hikari:

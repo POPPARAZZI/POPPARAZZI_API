@@ -1,6 +1,6 @@
 package com.spoons.popparazzi.email.repository;
 
-import kr.co.hs.domain.modules.memberAuth.domain.model.VerifyCode;
+import com.spoons.popparazzi.email.entity.VerifyCode;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

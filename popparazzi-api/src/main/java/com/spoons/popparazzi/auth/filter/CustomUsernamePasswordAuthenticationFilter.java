@@ -1,16 +1,11 @@
+/*
 package com.spoons.popparazzi.auth.filter;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.spoons.popparazzi.auth.service.SocialAuthServiceFactory;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import kr.co.hs.domain.modules.member.domain.constant.ProviderType;
-import kr.co.hs.domain.modules.member.domain.model.Member;
-import kr.co.hs.domain.modules.memberAuth.application.SocialAuthServiceFactory;
-import kr.co.hs.domain.modules.memberAuth.application.social.SocialAuthService;
-import kr.co.hs.domain.modules.memberAuth.infrastructure.dto.request.SocialRequestDTO;
-import kr.co.hs.domain.modules.memberAuth.infrastructure.dto.request.SocialUserInfo;
-import kr.co.hs.server.member.handler.LoginFailureHandler;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -29,10 +24,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Map;
 
-import static kr.co.hs.domain.modules.member.domain.constant.ProviderType.APPLE;
-import static kr.co.hs.domain.modules.member.domain.constant.ProviderType.LOCAL;
+*/
+/* 스프링 시큐리티의 기존 UsernamePasswordAuthenticationFilter를 대처할 Custom Filter 작성 *//*
 
-/* 스프링 시큐리티의 기존 UsernamePasswordAuthenticationFilter를 대처할 Custom Filter 작성 */
 
 public class CustomUsernamePasswordAuthenticationFilter extends AbstractAuthenticationProcessingFilter {
 
@@ -51,7 +45,9 @@ public class CustomUsernamePasswordAuthenticationFilter extends AbstractAuthenti
 
 
     public CustomUsernamePasswordAuthenticationFilter(ObjectMapper objectMapper, SocialAuthServiceFactory authServiceFactory, LoginFailureHandler loginFailureHandler) {
-        /* POST 요청이 올 때 해당 필터가 동작하도록 설정 */
+        */
+/* POST 요청이 올 때 해당 필터가 동작하도록 설정 *//*
+
         super(new OrRequestMatcher(
                 new AntPathRequestMatcher(LOGIN_REQUEST_URL, HTTP_MEHOD),
                 new AntPathRequestMatcher(SOCIAL_LOGIN_REQUEST_URL, HTTP_MEHOD)
@@ -83,7 +79,9 @@ public class CustomUsernamePasswordAuthenticationFilter extends AbstractAuthenti
         return null;
     }
 
-    /* /api/auth/login 요청 발생 시 메소드 호출되며 인증 처리 작성 */
+    */
+/* /api/auth/login 요청 발생 시 메소드 호출되며 인증 처리 작성 *//*
+
     public Authentication attemptNormalAuthentication(HttpServletRequest request, HttpServletResponse response) throws Exception {
 
         // 요청 컨텐츠 타입이 알맞은지 확인
@@ -205,3 +203,4 @@ public class CustomUsernamePasswordAuthenticationFilter extends AbstractAuthenti
     }
 
 }
+*/

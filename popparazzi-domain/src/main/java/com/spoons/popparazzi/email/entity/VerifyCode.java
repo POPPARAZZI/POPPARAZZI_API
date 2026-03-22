@@ -1,7 +1,6 @@
 package com.spoons.popparazzi.email.entity;
 
 import jakarta.persistence.*;
-import kr.co.hs.domain.modules.member.infrastructure.dto.request.MemberIdCheckRequest;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -31,7 +30,7 @@ public class VerifyCode {
     @CreatedDate
     Date issueDate;
 
-    public VerifyCode(MemberIdCheckRequest dto){
+  /*  public VerifyCode(MemberIdCheckRequest dto){
         this.email = dto.email();
-    }
+    }*/
 }

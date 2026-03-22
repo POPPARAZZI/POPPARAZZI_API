@@ -1,28 +1,30 @@
 package com.spoons.popparazzi.auth;
 
+import com.spoons.popparazzi.auth.command.MemberLoginCommand;
 import com.spoons.popparazzi.auth.command.MemberSignupCommand;
+import com.spoons.popparazzi.auth.command.TokenResult;
+import com.spoons.popparazzi.auth.dto.request.MemberLoginRequest;
 import com.spoons.popparazzi.auth.dto.request.MemberSignupRequest;
-import com.spoons.popparazzi.auth.service.MemberService;
+import com.spoons.popparazzi.auth.dto.response.TokenResponse;
+import com.spoons.popparazzi.auth.entity.enums.SnsType;
+import com.spoons.popparazzi.auth.service.AuthService;
+import com.spoons.popparazzi.jwt.security.CustomUserDetails;
 import com.spoons.popparazzi.response.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
 
 @Slf4j
-@RestController("/member")
+@RestController
+@RequestMapping("/auth")
 @RequiredArgsConstructor
 @Tag(name = "로그인, 로그아웃, 회원가입", description = "로그인, 로그아웃, 회원가입 관리 API")
 public class AuthController {
 
-    private final MemberService memberService;
+    private final AuthService authService;
 
     /**
      *
@@ -36,30 +38,31 @@ public class AuthController {
     public ApiResponse<Void> signup(@RequestBody @Valid MemberSignupRequest memberSignupRequest) {
 
         MemberSignupCommand memberCommand = memberSignupRequest.toCommand();
-        memberService.signup(memberCommand);
+        authService.signup(memberCommand);
 
         return ApiResponse.success();
     }
 
-    /* 재로그인 (정보 수정 전 확인) */
-    @PostMapping("/re-login")
-    public ResponseEntity<HttpResData<?>> reLogin(@RequestBody ReLoginVO memberRequest) {
-        String memberCode = MemberData.build();
+    /**
+     *
+     * @methodName	: login
+     * @author		: inseon kang
+     * @date		: 2026.03.22
+     * @returnType	: ApiResponse
+     * @desc		: 로그인
+     */
+    @PostMapping("/login")
+    public ApiResponse<?> login(@RequestBody @Valid MemberLoginRequest memberLoginRequest) {
 
-        if (memberCode != null) {
+        MemberLoginCommand memberCommand = memberLoginRequest.toCommand();
+        TokenResult result = authService.login(memberCommand);
 
-            authService.reLogin(memberCode, memberRequest.memberId(), memberRequest.memberPassword(), null );
-
-            return ResponseEntity.ok(HttpResData.success("확인되었습니다."));
-
-        } else {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(HttpResData.error(HttpStatus.UNAUTHORIZED.value(), "로그인 해주세요."));
-        }
+        return ApiResponse.success(TokenResponse.from(result));
     }
 
+
     /*  액세스토큰 재발급 */
-    @PostMapping("/reissue")
+/*    @PostMapping("/reissue")
     public ResponseEntity<HttpResData<?>> reissue(HttpServletRequest request, HttpServletResponse response) {
 
         try {
@@ -83,5 +86,5 @@ public class AuthController {
                     .body(HttpResData.error(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Internal Server Error"));
         }
 
-    }
+    }*/
 }

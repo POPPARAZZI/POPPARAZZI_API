@@ -3,8 +3,7 @@ package com.spoons.popparazzi.auth.service.social;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import kr.co.hs.domain.modules.member.domain.constant.ProviderType;
-import kr.co.hs.domain.modules.memberAuth.infrastructure.dto.request.SocialUserInfo;
+import com.spoons.popparazzi.auth.entity.enums.SnsType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -19,6 +18,7 @@ public class GoogleAuthService implements SocialAuthService{
 
     private static final String USER_INFO_URL = "https://www.googleapis.com/oauth2/v2/userinfo";
 
+/*
     @Override
     public SocialUserInfo getUserInfo(String accessToken) throws JsonProcessingException {
         RestTemplate restTemplate = new RestTemplate();
@@ -32,7 +32,8 @@ public class GoogleAuthService implements SocialAuthService{
         String email = jsonNode.path("email").asText();
         String name = jsonNode.path("name").asText();
 
-        return new SocialUserInfo(id, email, name, ProviderType.GOOGLE);
+        return new SocialUserInfo(id, email, name, SnsType.G);
     }
+*/
 
 }

@@ -27,6 +27,8 @@ public enum CommonErrorCode implements ErrorCode {
     TOKEN_NOT_FOUND(-1011, "토큰이 존재하지 않습니다", "AUTH"),
     TOKEN_EXPIRED(-1012, "토큰이 만료되었습니다", "AUTH"),
     INVALID_TOKEN(-1013, "유효하지 않은 토큰입니다", "AUTH"),
+    MEMBER_NOT_FOUND(-1014, "회원을 찾을 수 없습니다.", "AUTH"),
+    MEMBER_NOT_ACTIVITY(-1015, "비활성화 회원입니다.", "AUTH"),
 
     // 403 Forbidden
     FORBIDDEN(-1020, "접근 권한이 없습니다.", "COMMON"),

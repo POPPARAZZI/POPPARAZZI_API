@@ -1,3 +1,4 @@
+/*
 package com.spoons.popparazzi.email.service;
 
 import jakarta.mail.MessagingException;
@@ -5,8 +6,6 @@ import jakarta.mail.SendFailedException;
 import jakarta.mail.internet.AddressException;
 import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
-import kr.co.hs.domain.modules.memberAuth.infrastructure.dto.EmailMessage;
-import kr.co.hs.util.exception.EmailException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.mail.MailAuthenticationException;
 import org.springframework.mail.MailSendException;
@@ -68,3 +67,4 @@ public class EmailService {
     }
 
 }
+*/

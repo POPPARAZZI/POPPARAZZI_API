@@ -1,5 +1,9 @@
 package com.spoons.popparazzi.test;
 
+import com.spoons.popparazzi.auth.entity.enums.SnsType;
+import com.spoons.popparazzi.jwt.security.CustomUserDetails;
+import com.spoons.popparazzi.response.ApiResponse;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -11,6 +15,18 @@ import java.util.Base64;
 
 @RestController
 public class TestController {
+
+    @GetMapping("/me")
+    public ApiResponse<?> getMyInfo(
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        String memberCode = userDetails.getMemberCode();
+        String memberUuid = userDetails.getMemberUuid();
+        String memberId = userDetails.getMemberId();
+        SnsType provider = userDetails.getSnsType();
+
+        return ApiResponse.success(memberCode);
+    }
 
     @GetMapping("/api/test")
     public String test() {
@@ -71,4 +87,5 @@ public class TestController {
         secureRandom.nextBytes(iv);
         return Base64.getEncoder().encodeToString(iv);
     }
+
 }

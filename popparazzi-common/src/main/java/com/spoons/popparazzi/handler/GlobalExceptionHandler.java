@@ -2,7 +2,6 @@ package com.spoons.popparazzi.handler;
 
 import com.spoons.popparazzi.error.code.FieldErrors;
 import com.spoons.popparazzi.error.exception.BusinessException;
-import com.spoons.popparazzi.error.code.ErrorCode;
 import com.spoons.popparazzi.error.code.CommonErrorCode;
 import com.spoons.popparazzi.response.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -13,6 +12,10 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -107,6 +110,24 @@ public class GlobalExceptionHandler {
         log.warn("MethodArgumentTypeMismatchException: {}", e.getMessage());
 
         return ApiResponse.error(CommonErrorCode.INVALID_TYPE_VALUE);
+    }
+
+    // 비밀번호 틀렸을 때
+    @ExceptionHandler(BadCredentialsException.class)
+    public ApiResponse<Void> handleBadCredentials(BadCredentialsException e) {
+        return ApiResponse.error(CommonErrorCode.INVALID_TYPE_VALUE);
+    }
+
+    // 유저 못찾았을 때
+    @ExceptionHandler(UsernameNotFoundException.class)
+    public ApiResponse<Void> handleUsernameNotFound(UsernameNotFoundException e) {
+        return ApiResponse.error(CommonErrorCode.MEMBER_NOT_FOUND);
+    }
+
+    // 비활성 계정
+    @ExceptionHandler(DisabledException.class)
+    public ApiResponse<Void> handleDisabled(DisabledException e) {
+        return ApiResponse.error(CommonErrorCode.MEMBER_NOT_ACTIVITY);
     }
 
     /**

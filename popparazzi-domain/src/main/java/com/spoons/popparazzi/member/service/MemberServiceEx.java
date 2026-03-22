@@ -1,4 +1,5 @@
-package com.spoons.popparazzi.auth.service;
+/*
+package com.spoons.popparazzi.member.service;
 
 import com.querydsl.core.types.dsl.BooleanExpression;
 import kr.co.hs.domain.modules.member.domain.constant.ProviderType;
@@ -53,7 +54,9 @@ public class MemberServiceEx {
     private final PointJpaRepository pointJpaRepository;
     private final PagingUtils pagingUtils;
 
-    /* 아이디 찾기 */
+    */
+/* 아이디 찾기 *//*
+
     @Transactional(readOnly = true)
     public Member searchId( String email, String memberName) {
 
@@ -95,7 +98,9 @@ public class MemberServiceEx {
 
     }
 
-    /* id찾기 이메일 보내기 */
+    */
+/* id찾기 이메일 보내기 *//*
+
     @Transactional
     public void sendForgotIdEmail(Member member) {
 
@@ -107,7 +112,9 @@ public class MemberServiceEx {
     }
 
 
-    /* 비밀번호 변경 코드 전송 */
+    */
+/* 비밀번호 변경 코드 전송 *//*
+
     @Transactional
     public void sendForgotPasswordEmail(String email) {
         String subject = "[UnMark] 비밀번호 인증 코드 안내 이메일 입니다.";
@@ -125,13 +132,17 @@ public class MemberServiceEx {
         return newPaw;
     }
 
-    /* 아이디 중복 체크 */
+    */
+/* 아이디 중복 체크 *//*
+
     @Transactional(readOnly = true)
     public Boolean duplicateId(String memberId) {
         return memberJpaRepository.existsByMemberId(memberId);
     }
 
-    /* 이메일 인증 */
+    */
+/* 이메일 인증 *//*
+
     @Transactional
     public void sendCodeToEmail(String email) {
 
@@ -183,13 +194,17 @@ public class MemberServiceEx {
     }
 
 
-    /* 아이디 * 처리 */
+    */
+/* 아이디 * 처리 *//*
+
     public static String maskId(String id) {
         String prefix = id.substring(0, id.length() - 3); // 뒤 3글자를 제외한 부분
         return prefix + "*".repeat(3);
     }
 
-    /* 이메일 검증 */
+    */
+/* 이메일 검증 *//*
+
     @Transactional
     public void verifiedCode(VerifyCode request) {
         String email = request.getEmail();
@@ -220,7 +235,9 @@ public class MemberServiceEx {
 
     }
 
-    /* 사용중인 이메일인지 확인 */
+    */
+/* 사용중인 이메일인지 확인 *//*
+
     private boolean checkDuplicatedEmail(String email) {
         Optional<Member> member = memberJpaRepository.findByEmail(email);
         if(member.isPresent()) {
@@ -229,7 +246,9 @@ public class MemberServiceEx {
         return true;
     }
 
-    /* 인증번호  숫자로만 */
+    */
+/* 인증번호  숫자로만 *//*
+
     private String createCode() {
         try {
             Random random = SecureRandom.getInstanceStrong();
@@ -244,7 +263,9 @@ public class MemberServiceEx {
         }
     }
 
-    /* 인증 코드 문자포함 */
+    */
+/* 인증 코드 문자포함 *//*
+
     public String createRandomPwd(int length) {
         try {
             Random random = SecureRandom.getInstanceStrong();
@@ -261,7 +282,9 @@ public class MemberServiceEx {
         }
     }
 
-    /* 회원 리스트 조회 */
+    */
+/* 회원 리스트 조회 *//*
+
     public PageImpl<MemberResponseDTO> findAllMember(Optional<Integer> page, Optional<Integer> pageSize, Optional<String> searchTerm, Optional<LocalDate> startDate, Optional<LocalDate> endDate, Optional<Status> status) {
 
         Pageable pageRequest = pagingUtils.createPageRequest(page, pageSize);
@@ -299,7 +322,9 @@ public class MemberServiceEx {
 
 
 
-    /* 회원 상세 조회 */
+    */
+/* 회원 상세 조회 *//*
+
     public MemberResponseDTO getMyProfile(String memberCode) throws Exception {
 
         // 회원 조회
@@ -320,7 +345,9 @@ public class MemberServiceEx {
         return MemberResponseDTO.of(member,  hasPoint, usedPoint);
     }
 
-    /* 회원 정보 수정 */
+    */
+/* 회원 정보 수정 *//*
+
     @Transactional
     public void profileUpdate(MemberUpdate request, String memberCode) throws Exception {
         // 회원 조회
@@ -332,7 +359,9 @@ public class MemberServiceEx {
         memberJpaRepository.save(member);
     }
 
-    /* 이용 상태 변경 */
+    */
+/* 이용 상태 변경 *//*
+
     @Transactional
     public void statusChange(List<String> selectedMembers, Status status) {
 
@@ -346,7 +375,9 @@ public class MemberServiceEx {
         memberJpaRepository.saveAll(members);
     }
 
-    /* 관리자 조회 */
+    */
+/* 관리자 조회 *//*
+
     public PageImpl<MemberResponseDTO> findAllAdmin(Optional<Integer> page, Optional<Integer> pageSize,  Optional<String> searchTerm, Optional<Status> status) {
 
         Pageable pageRequest = pagingUtils.createPageRequest(page, pageSize);
@@ -381,7 +412,9 @@ public class MemberServiceEx {
         return queryRepository.getMemberDetail(memberCode);
     }
 
-    /* 회원 탈퇴 */
+    */
+/* 회원 탈퇴 *//*
+
     public void signOut(String memberCode) {
 
         Member member = memberJpaRepository.findByMemberCode(memberCode).orElseThrow( () -> new MarkException(USER_NOT_FOUND));
@@ -397,3 +430,4 @@ public class MemberServiceEx {
         return provider.toString();
     }
 }
+*/

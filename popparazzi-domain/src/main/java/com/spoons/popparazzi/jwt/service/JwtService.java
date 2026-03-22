@@ -1,26 +1,33 @@
 package com.spoons.popparazzi.jwt.service;
 
-import com.spoons.popparazzi.auth.repository.MemberJpaRepository;
-import io.jsonwebtoken.*;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.spoons.popparazzi.auth.entity.Member;
+import com.spoons.popparazzi.auth.repository.AuthJpaRepository;
+import com.spoons.popparazzi.error.exception.BusinessException;
+import com.spoons.popparazzi.error.exception.UnauthorizedException;
+import com.spoons.popparazzi.response.ApiResponse;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jws;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
-
 
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.security.Key;
 import java.security.SignatureException;
 import java.util.*;
+
+import static com.spoons.popparazzi.error.code.CommonErrorCode.MEMBER_NOT_FOUND;
 
 @Slf4j
 @Service
@@ -34,19 +41,19 @@ public class JwtService {
     private final Key SECRET_KEY;
     private final Key REFRESH_SECRET_KEY;
 
-    private final MemberJpaRepository memberRepository;
-    private final DeviceService deviceService;
+    private final AuthJpaRepository authJpaRepository;
+    //private final DeviceService deviceService;
 
-    private static final String ACCESS_TOKEN_SUBJECT = "AccessToken";
+    private static final String ACCESS_TOKEN_SUBJECT = "Authorization";
     private static final String REFRESH_TOKEN_SUBJECT = "RefreshToken";
     private static final String BEARER = "Bearer ";
 
 
 
-    public JwtService(@Value("${jwt.secret}") String secretKey, @Value("${jwt.secret-secret}") String refreshSecretKey,
-                      MemberJpaRepository memberRepository, DeviceService deviceService) {
-        this.memberRepository = memberRepository;
-        this.deviceService = deviceService;
+    public JwtService(@Value("${jwt.secret}") String secretKey, @Value("${jwt.refresh-secret}") String refreshSecretKey,
+                      AuthJpaRepository authJpaRepository) {
+        this.authJpaRepository = authJpaRepository;
+       // this.deviceService = deviceService;
 
         byte[] keyBytes = Decoders.BASE64.decode(secretKey);
         byte[] refreshKeyBytes = Decoders.BASE64.decode(refreshSecretKey);
@@ -56,12 +63,14 @@ public class JwtService {
 
     }
 
-    public String createAccessToken(Map<String, String> memberInfo) {
+    public String createAccessToken(Member member) {
 
         // Claims 쪽에 키, 밸류 값으로 얼마든지 저장
         Claims claims = Jwts.claims().setSubject( ACCESS_TOKEN_SUBJECT );
 
-        claims.putAll( memberInfo );
+        claims.put("memberUuid", member.getMemberUuid()); // 토큰 식별용
+        claims.put("role", member.getRole());
+        claims.put("provider", member.getSnsType().name());
 
         return Jwts.builder()
                 .setId(UUID.randomUUID().toString())
@@ -87,19 +96,13 @@ public class JwtService {
     }
 
     @Transactional
-    public void updateRefreshToken( String uId, String refreshToken) {
+    public void updateRefreshToken( String memberUuid, String refreshToken) {
 
-        Date refreshEndDate = new Date(System.currentTimeMillis() + refreshTokenExpirationPeriod);
+        Member member = authJpaRepository.findByMemberUuid(memberUuid)
+                .orElseThrow(() -> new BusinessException(MEMBER_NOT_FOUND));
 
-        int user = userDAO.findByMember(uId);
-
-        if (user > 0) {
-            // 멤버가 존재하면 refreshToken 업데이트
-            userDAO.updateRefreshToken(uId, refreshToken, refreshEndDate);
-        } else {
-            // 멤버가 존재하지 않으면 예외 발생
-            throw new NotFoundUserException();
-        }
+        // 멤버가 존재하면 refreshToken 업데이트
+        member.updateToken(refreshToken);
 
     }
 
@@ -147,7 +150,7 @@ public class JwtService {
             log.info("jwt 암호화 키가 다릅니다.");
             return -2;
 
-        } catch (ExpiredJwtException e) {
+        } catch (UnauthorizedException e) {
             log.info("token 키가 만료되었습니다.");
             return -1;
 
@@ -169,7 +172,7 @@ public class JwtService {
     }
 
     public Jws<Claims> getClaims(String tokenKey, boolean isRefreshToken)
-            throws SignatureException, ExpiredJwtException, IllegalArgumentException {
+            throws SignatureException, IllegalArgumentException {
 
         if (!isRefreshToken) {
             return Jwts.parserBuilder().setSigningKey(SECRET_KEY).build().parseClaimsJws(tokenKey);
@@ -187,30 +190,15 @@ public class JwtService {
 
     public void checkRefreshTokenAndReIssueAccessToken(HttpServletResponse response, String refreshToken, HttpServletRequest request ) throws IOException {
 
-        HashMap<String, Object> user = userDAO.findByRefreshToken(refreshToken);
+        Member member = authJpaRepository.findByToken(refreshToken);
 
-        if (user != null) {
+        if (member != null) {
 
-          /*  String dType;
-
-            try {
-                JSONObject jsonObj = new JSONObject(IOUtils.toString(request.getReader()));
-
-                dType = (String) jsonObj.get("dType");
-            } catch(JSONException e) {
-
-                throw new DeviceInfoException();
-
-            }*/
-
-            String uId = user.get("uId").toString();
             // 리프레시 토큰이 새로 발행?
-            String reIssuedRefreshToken = reIssuedRefreshToken(uId);
+            String reIssuedRefreshToken = reIssuedRefreshToken(member.getMemberUuid());
 
             // 일치한다면 새로운 액세스 토큰을 발급
-            String newAccessToken = createAccessToken(
-                    Map.of("uId", uId, "spCode", (String) user.get("spCode") , "level", String.valueOf(user.get("level")))
-            );
+            String newAccessToken = createAccessToken(member);
 
             // 사용자 응답쪽으로 넘긴다.
 
@@ -218,79 +206,40 @@ public class JwtService {
             response.setCharacterEncoding("UTF-8");
             response.setContentType("application/json; charset=UTF-8");
 
-            HashMap<String, Object> output = ApiErrorCode.getMsg(ApiErrorCode.SUCCESS.getResult());
-
             Map<String, Object> data = new HashMap<>();
             data.put("Authorization", newAccessToken);
             data.put("RefreshToken", reIssuedRefreshToken);
-            output.put("data", data);
+
+            ObjectMapper objectMapper = new ObjectMapper();
+
+            ApiResponse<Map<String, Object>> output = ApiResponse.success(data);
 
             // JSON 형식으로 응답 바디에 메시지를 작성
             PrintWriter writer = response.getWriter();
-            writer.write(JsonUtil.getJsonStringFromMap(output).toJSONString());
+            writer.write(objectMapper.writeValueAsString(output));
             writer.flush();
 
         } else {
-            throw new NotFoundUserException();
+            throw new BusinessException(MEMBER_NOT_FOUND);
         }
 
     }
 
-    public String reIssuedRefreshToken( String uId ) {
+    public String reIssuedRefreshToken( String memberUuid ) {
 
         // 새로운 리프래쉬 토큰을 만들었다.
         String reIssuedRefreshToken = createRefreshToken();
         Date refreshEndDate = new Date(System.currentTimeMillis() + refreshTokenExpirationPeriod);
         //
-        userDAO.updateRefreshToken(uId, reIssuedRefreshToken, refreshEndDate);
+        updateRefreshToken(memberUuid, reIssuedRefreshToken);
 
         return reIssuedRefreshToken;
 
     }
 
 
-    public void checkAccessTokenAndAuthentication( HttpServletRequest request,
-                                                   HttpServletResponse response, FilterChain filterChain ) throws ServletException, IOException {
-
-        String deviceCode = request.getHeader("X-Device-Code");
-
-        // 유효한지 검사 // 유효하다면,
-        // ifPresent 있다면? 없다면? 쓸때
-        try {
-
-            getAccessToken(request)
-                    .filter(token -> this.isAliveToken(token, false) == 1)  // 유효한 토큰 필터링
-                    .flatMap(this::getMemberId)  // Optional<String> 반환 → flatMap 사용
-                    .map(userDAO::findByMemberId) // HashMap<String, Object> 반환 → map 사용
-                    .ifPresent(userInfo -> {
-                        this.saveAuthentication(userInfo);
-                        // userInfo에서 uCode 추출해서 디바이스 검증
-                        // 디바이스 해제가 아닐 때만 디바이스 검증
-                        if (!request.getRequestURI().equals("/api/devices/unregister")) {
-                            String uCode = (String) userInfo.get("uCode");
-                            deviceService.validateDevice(uCode, deviceCode);
-                        }
-                    });
-
-            // 다음 필터로 넘어가라
-            filterChain.doFilter(request, response);
-        } catch (DeviceInfoException e) {
-            sendApiErrorResponse(response);
-            return;
-        }
-
-    }
-    private void sendApiErrorResponse(HttpServletResponse response) throws IOException {
-        response.setStatus(HttpStatus.OK.value()); // HTTP 200으로 설정
-        response.setContentType("application/json;charset=UTF-8");
-
-
-        HashMap<String, Object> output = ApiErrorCode.getMsg(ApiErrorCode.DEVICE_VALIDATION_FAILED.getResult());
-        response.getWriter().write(JsonUtil.getJsonStringFromMap(output).toJSONString());
-    }
-
     // 액세스 토큰을 전달하여 memberCode를 꺼내오는 기능
-    public Optional<String> getMemberId(String token) {
+    public Optional<String> extractUuid(String token) {
 
         try {
             return Optional.ofNullable(
@@ -303,8 +252,7 @@ public class JwtService {
                             .parseClaimsJws( token )
                             // 파싱해오는 동작
                             .getBody()
-                            .get("uId").toString()
-                    // memberCode를 꺼내오겠다.
+                            .get("memberUuid", String.class)
             );
 
         } catch ( Exception e ) {
@@ -315,29 +263,6 @@ public class JwtService {
 
     }
 
-
-    private void saveAuthentication( HashMap<String, Object> user ) {
-
-        UserDetails userDetails = User.builder()
-                .username( user.get("uId").toString() )
-                .password( user.get("pwd").toString())
-                .roles("USER")
-                .build();
-
-        CustomUser customUser = CustomUser.of((String) user.get("uCode"), (String) user.get("spCode"),  userDetails, (int) user.get("level"), (String) user.get("adultHiddenYn"));
-
-        // userDetails.getAuthorities() User,ADMIN인지 확인
-        // 1. principal(인증주체)
-        // 2. credntials(비밀번호)- 로그인처리를 하는게 아니기 때문에 굳이 여기선 필요없다.
-        // 3. 인증처리후 인가처리 해야하는데 user인지 admin인지 셋팅
-        Authentication authentication
-                = new UsernamePasswordAuthenticationToken( customUser, null, userDetails.getAuthorities() );
-
-        // 인증객체를 저장해줘야 하는 형태가 있다.(Authentication - UsernamePasswordAuthenticationToken)
-        SecurityContextHolder.getContext().setAuthentication( authentication );
-    }
-
-
     public Date extractExpiration(String accessToken) {
         Claims claims = Jwts.parserBuilder()
                 .setSigningKey(SECRET_KEY)  // jwtToken은 토큰 서명에 사용한 키입니다.
@@ -347,9 +272,7 @@ public class JwtService {
         return claims.getExpiration();
     }
 
-    public Map<String, Object> getUserInfo(String uId) {
-        return userDAO.getUserInfo(uId);
-    }
+
 }
 
 

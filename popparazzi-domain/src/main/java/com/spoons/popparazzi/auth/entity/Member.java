@@ -1,6 +1,8 @@
 package com.spoons.popparazzi.auth.entity;
 
 
+import com.spoons.popparazzi.auth.entity.enums.MemberRole;
+import com.spoons.popparazzi.auth.entity.enums.MemberStatus;
 import com.spoons.popparazzi.auth.entity.enums.SnsType;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
@@ -13,7 +15,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "TBL_MEMBER_MASTER")
+@Table(name = "tbl_member_master")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Member {
@@ -21,67 +23,73 @@ public class Member {
 
     @Id
     @Size(max = 22)
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "TMM_CODE", nullable = false, length = 22)
+    @Column(name = "tmm_code", nullable = false, length = 22)
+    @Setter
     private String memberCode;
 
     @Size(max = 50)
     @NotNull
-    @Column(name = "TMM_ID", nullable = false, length = 50)
+    @Column(name = "tmm_id", nullable = false, length = 50)
     private String memberId;
 
-    @Size(max = 50)
+    @Size(max = 255)
     @NotNull
-    @Column(name = "TMM_PWD", nullable = false, length = 50)
+    @Column(name = "tmm_pwd", nullable = false, length = 50)
     private String memberPwd;
 
-    @Size(max = 50)
-    @Column(name = "TMM_PHONE", length = 50)
+    @Size(max = 255)
+    @Column(name = "tmm_phone", length = 50)
     private String phone;
 
     @Size(max = 15)
-    @Column(name = "TMM_NAME", length = 15)
+    @Column(name = "tmm_name", length = 15)
     private String name;
 
     @Size(max = 50)
-    @Column(name = "TMM_NICKNAME", length = 50)
+    @Column(name = "tmm_nickname", length = 50)
     private String nickName;
 
     @Size(max = 100)
     @NotNull
-    @Column(name = "TMM_EMAIL", nullable = false, length = 100)
+    @Column(name = "tmm_email", nullable = false, length = 100)
     private String email;
 
     @Size(max = 255)
-    @Column(name = "TMM_TOKEN")
+    @Column(name = "tmm_token")
     private String token;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "TMM_SNS_TYPE")
+    @Column(name = "tmm_sns_type")
     private SnsType snsType;
 
-    @NotNull
-    @ColumnDefault("'N'::bpchar")
-    @Column(name = "TMM_AUTH_YN", nullable = false)
-    private String authYn;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tmm_role")
+    private MemberRole role;
 
-    @NotNull
+    @ColumnDefault("'N'::bpchar")
+    @Column(name = "tmm_auth_yn", nullable = false)
+    private String authYn = "N";
+
     @CreationTimestamp
-    @Column(name = "TMM_REG_DT", nullable = false)
+    @Column(name = "tmm_reg_dt", nullable = false)
     private Instant regDt;
 
     @Size(max = 255)
-    @Column(name = "TMM_PROFILE_URL")
+    @Column(name = "tmm_profile_url")
     private String profileUrl;
 
     @Size(max = 50)
     @NotNull
-    @Column(name = "TMM_UUID", nullable = false, length = 50)
+    @Column(name = "tmm_uuid", nullable = false, length = 50)
     private String memberUuid;
 
     @NotNull
-    @Column(name = "TMM_GENDER", nullable = false)
+    @Column(name = "tmm_gender", nullable = false)
     private String gender;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tmm_status", nullable = false, length = 20)
+    private MemberStatus status;
 
     public Member(String memberId, String memberPwd, String email, String nickName, String gender, SnsType snsType, UUID uuid) {
         this.memberId = memberId;
@@ -91,11 +99,11 @@ public class Member {
         this.gender = gender;
         this.snsType = snsType;
         this.memberUuid = uuid.toString();
+        this.role = MemberRole.USER;
+        this.status = MemberStatus.ACTIVE;
     }
 
-
-    public void assignCode(String code) {
-        this.memberCode = code;
+    public void updateToken(String token) {
+        this.token = token;
     }
-
 }
