@@ -1,5 +1,7 @@
 package com.spoons.popparazzi.seq.service;
 
+import java.util.UUID;
+
 public interface SeqService {
 
     /**
@@ -10,4 +12,6 @@ public interface SeqService {
      * @methodDesc		: 타입에 따라서 시퀀스 값을 가져올 수 있도록 함
      */
     Object getSeqCode(Object vo);
+
+    UUID getUuid();
 }

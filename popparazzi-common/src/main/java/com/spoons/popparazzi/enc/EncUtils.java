@@ -16,9 +16,9 @@ public class EncUtils {
     private static Map<String, String> ivs = Map.of();
 
 
-    public EncUtils(Map<String, String> keys, Map<String, String> ivs) {
-        this.keys = keys;
-        this.ivs = ivs;
+    public void EncUtils(Map<String, String> keys, Map<String, String> ivs) {
+        EncUtils.keys = keys;
+        EncUtils.ivs = ivs;
     }
 
     public static String encrypt(String text, String section) throws Exception {

@@ -1,3 +1,4 @@
+
 bootJar {
     enabled = false
 }
@@ -6,9 +7,12 @@ jar {
     enabled = true
 }
 
+
 dependencies {
     // Spring Web
     implementation 'org.springframework.boot:spring-boot-starter-web'
+
+    implementation 'org.springframework.boot:spring-boot-starter-security'
 
     // Validation
     implementation 'org.springframework.boot:spring-boot-starter-validation'
@@ -23,4 +27,5 @@ dependencies {
     // Utility
     implementation 'org.apache.commons:commons-lang3'
     implementation 'commons-io:commons-io:2.11.0'
+
 }
