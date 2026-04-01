@@ -1,6 +1,6 @@
 package com.spoons.popparazzi.jwt.security;
 
-import com.spoons.popparazzi.auth.entity.Member;
+import com.spoons.popparazzi.member.entity.Member;
 import com.spoons.popparazzi.auth.entity.enums.SnsType;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;

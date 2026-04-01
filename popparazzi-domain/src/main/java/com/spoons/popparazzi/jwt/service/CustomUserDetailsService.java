@@ -1,22 +1,17 @@
 package com.spoons.popparazzi.jwt.service;
 
-import com.spoons.popparazzi.auth.entity.Member;
 import com.spoons.popparazzi.auth.entity.enums.MemberStatus;
-import com.spoons.popparazzi.auth.entity.enums.SnsType;
 import com.spoons.popparazzi.auth.repository.AuthJpaRepository;
 import com.spoons.popparazzi.error.exception.BusinessException;
 import com.spoons.popparazzi.jwt.security.CustomUserDetails;
+import com.spoons.popparazzi.member.entity.Member;
 import lombok.RequiredArgsConstructor;
-
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import static com.spoons.popparazzi.auth.entity.enums.SnsType.E;
 import static com.spoons.popparazzi.error.code.CommonErrorCode.MEMBER_NOT_ACTIVITY;
 import static com.spoons.popparazzi.error.code.CommonErrorCode.MEMBER_NOT_FOUND;
 

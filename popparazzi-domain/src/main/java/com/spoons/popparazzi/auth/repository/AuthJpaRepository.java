@@ -1,6 +1,6 @@
 package com.spoons.popparazzi.auth.repository;
 
-import com.spoons.popparazzi.auth.entity.Member;
+import com.spoons.popparazzi.member.entity.Member;
 import com.spoons.popparazzi.auth.entity.enums.SnsType;
 import org.springframework.data.jpa.repository.JpaRepository;
 

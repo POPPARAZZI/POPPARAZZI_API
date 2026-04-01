@@ -1,6 +1,5 @@
 package com.spoons.popparazzi.auth.service;
 
-import com.spoons.popparazzi.auth.entity.Member;
 import com.spoons.popparazzi.auth.entity.enums.SnsType;
 import com.spoons.popparazzi.auth.repository.AuthJpaRepository;
 import com.spoons.popparazzi.auth.service.social.GoogleAuthService;
@@ -8,9 +7,9 @@ import com.spoons.popparazzi.auth.service.social.KakaoAuthService;
 import com.spoons.popparazzi.auth.service.social.NaverAuthService;
 import com.spoons.popparazzi.auth.service.social.SocialAuthService;
 import com.spoons.popparazzi.jwt.service.JwtService;
+import com.spoons.popparazzi.member.entity.Member;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor

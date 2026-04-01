@@ -1,10 +1,10 @@
 package com.spoons.popparazzi.jwt.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.spoons.popparazzi.auth.entity.Member;
 import com.spoons.popparazzi.auth.repository.AuthJpaRepository;
 import com.spoons.popparazzi.error.exception.BusinessException;
 import com.spoons.popparazzi.error.exception.UnauthorizedException;
+import com.spoons.popparazzi.member.entity.Member;
 import com.spoons.popparazzi.response.ApiResponse;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
@@ -17,7 +17,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Service;
 

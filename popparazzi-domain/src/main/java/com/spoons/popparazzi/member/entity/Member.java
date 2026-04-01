@@ -1,5 +1,8 @@
 package com.spoons.popparazzi.member.entity;
 
+import com.spoons.popparazzi.auth.entity.enums.MemberRole;
+import com.spoons.popparazzi.auth.entity.enums.MemberStatus;
+import com.spoons.popparazzi.auth.entity.enums.SnsType;
 import com.spoons.popparazzi.common.YesNo;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -7,6 +10,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "tbl_member_master")
@@ -19,10 +23,10 @@ public class Member {
     private String memberCode;
 
     @Column(name = "tmm_id", nullable = false, length = 50)
-    private String loginId;
+    private String memberId;
 
-    @Column(name = "tmm_pwd", nullable = false, length = 50)
-    private String password;
+    @Column(name = "tmm_pwd", nullable = false, length = 255)
+    private String memberPwd;
 
     @Column(name = "tmm_phone", length = 50)
     private String phone;
@@ -40,7 +44,7 @@ public class Member {
     private String token;
 
     @Column(name = "tmm_sns_type", length = 1)
-    private String snsType;
+    private SnsType snsType;
 
     @Convert(converter = com.spoons.popparazzi.common.YesNoConverter.class)
     @Column(name = "tmm_auth_yn", nullable = false, length = 1)
@@ -53,7 +57,7 @@ public class Member {
     private String profileUrl;
 
     @Column(name = "tmm_uuid", nullable = false, length = 50)
-    private String uuid;
+    private String memberUuid;
 
     @Column(name = "tmm_gender", nullable = false, length = 1)
     private String gender;
@@ -63,4 +67,33 @@ public class Member {
 
     @Column(name = "tmm_cover_url", length = 255)
     private String coverUrl;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tmm_role", length = 20)
+    private MemberRole role;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tmm_status", length = 20)
+    private MemberStatus status;
+
+    public Member(String memberId, String memberPwd, String email, String nickname, String gender, SnsType snsType, UUID uuid) {
+        this.memberId = memberId;
+        this.memberPwd = memberPwd;
+        this.email = email;
+        this.nickname = nickname;
+        this.gender = gender;
+        this.snsType = snsType;
+        this.memberUuid = uuid.toString();
+        this.authYn = YesNo.NO;
+        this.role = MemberRole.USER;
+        this.status = MemberStatus.ACTIVE;
+    }
+
+    public void setMemberCode(String memberCode) {
+        this.memberCode = memberCode;
+    }
+
+    public void updateToken(String token) {
+        this.token = token;
+    }
 }

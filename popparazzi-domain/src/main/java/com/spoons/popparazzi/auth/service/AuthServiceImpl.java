@@ -1,37 +1,21 @@
 package com.spoons.popparazzi.auth.service;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.spoons.popparazzi.auth.command.MemberLoginCommand;
 import com.spoons.popparazzi.auth.command.MemberSignupCommand;
 import com.spoons.popparazzi.auth.command.TokenResult;
-import com.spoons.popparazzi.auth.entity.Member;
 import com.spoons.popparazzi.auth.entity.enums.MemberStatus;
 import com.spoons.popparazzi.auth.entity.enums.SnsType;
 import com.spoons.popparazzi.auth.repository.AuthJpaRepository;
 import com.spoons.popparazzi.error.exception.BusinessException;
 import com.spoons.popparazzi.jwt.service.CustomUserDetailsService;
 import com.spoons.popparazzi.jwt.service.JwtService;
+import com.spoons.popparazzi.member.entity.Member;
 import com.spoons.popparazzi.seq.service.SeqService;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.authentication.AuthenticationServiceException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StreamUtils;
-
-import javax.crypto.SecretKey;
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
-import java.util.Collection;
-import java.util.Map;
 
 import static com.spoons.popparazzi.auth.error.AuthErrorCode.ALREADY_SIGNUP;
 import static com.spoons.popparazzi.auth.error.AuthErrorCode.INVALID_MEMBER;

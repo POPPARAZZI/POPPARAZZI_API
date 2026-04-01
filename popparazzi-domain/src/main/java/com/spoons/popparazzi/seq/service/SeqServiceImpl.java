@@ -1,8 +1,7 @@
 package com.spoons.popparazzi.seq.service;
 
-import com.spoons.popparazzi.auth.entity.Member;
+import com.spoons.popparazzi.member.entity.Member;
 import com.spoons.popparazzi.moim.entity.Moim;
-import com.spoons.popparazzi.seq.entity.Seq;
 import com.spoons.popparazzi.seq.repository.SeqRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

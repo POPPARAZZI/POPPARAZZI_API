@@ -10,37 +10,33 @@ server:
     connection-timeout: 60000
     keep-alive-timeout: 60000
     max-http-response-header-size: 65536
+
 logging:
   level:
     root: DEBUG
 
-Spring:
-# jwt secret key 설정
-  jwt:
-    secret:
-    tokenExpiry: 3600000
-    refreshSecret:
-    refreshTokenExpiry: 1209600000
+jwt:
+  secret: tXH4oSUvKk1zrckq+Ls/PR8yQ2K6iGHf2BhnfzLAiCoVxgd8/Wz37LL+MC1vHeBSPnKWi3ZfJi+BWhM+N5BF+w=
+  refresh-secret: hH12r/BTBOka1zPknSW0XW9N9EExXM3PcxLrOMN4ruLG+SVW6p8JS/BmDaVB9uQqVB9izvovoJrXqWgddG5yxA==
+  access-token-expiration: 3600000
+  refresh-token-expiration: 1209600000
 
-# 암호화
 encryption:
   keys:
-    login:
-    signup:
+    signup: CSZaYqBII09U1AHa3HXvKXzXkyEZmDlmin7j+iQjwYE=
   ivs:
-    login:
-    signup:
+    signup: HJjyL305R6D4FOLSwojlMg==
 
-# postgresql
 spring:
   config:
     activate:
       on-profile: dev
+
   datasource:
     driver-class-name: net.sf.log4jdbc.sql.jdbcapi.DriverSpy
-    url:
-    username:
-    password:
+    url: jdbc:log4jdbc:postgresql://aws-1-ap-northeast-2.pooler.supabase.com:5432/postgres
+    username: postgres.vjeftabbisgxwapfikgi
+    password: '!tmvnswm123'
 
   jpa:
     database: postgresql
@@ -55,9 +51,3 @@ spring:
         use_sql_comments: true
         jdbc:
           time_zone: Asia/Seoul
-
-
-
-
-
-
