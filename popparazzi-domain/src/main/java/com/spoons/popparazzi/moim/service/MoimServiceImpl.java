@@ -146,6 +146,7 @@ public class MoimServiceImpl implements MoimService {
 
         Set<String> likedSet = moimCardSupportService.getLikedMoimCodes(memberCode, moimCodes);
         Map<String, List<String>> categoryMap = moimCardSupportService.getMoimCategories(moimCodes);
+        Map<String, List<String>> profileMap = moimCardSupportService.getParticipantProfileUrls(moimCodes);
 
         Map<String, String> thumbMap = fileThumbnailService.getMoimThumbsWithPopupFallback(
                 toThumbTargets(items, NewestMoimItemQuery::moimCode, NewestMoimItemQuery::popupCode)
@@ -156,11 +157,12 @@ public class MoimServiceImpl implements MoimService {
                         it.moimCode(),
                         it.popupCode(),
                         it.title(),
-                        it.date(),
-                        it.maxParticipants(),
+                        it.moimDate(),
+                        it.maxParticipantCount(),
                         thumbMap.get(it.moimCode()),
                         likedSet.contains(it.moimCode()),
-                        categoryMap.getOrDefault(it.moimCode(), List.of())
+                        categoryMap.getOrDefault(it.moimCode(), List.of()),
+                        profileMap.getOrDefault(it.moimCode(), List.of())
                 ))
                 .toList();
     }
@@ -229,9 +231,9 @@ public class MoimServiceImpl implements MoimService {
                         it.moimCode(),
                         it.popupCode(),
                         it.title(),
-                        it.date(),
+                        it.moimDate(),
                         participantMap.getOrDefault(it.moimCode(), 0),
-                        it.maxParticipants(),
+                        it.maxParticipantCount(),
                         thumbMap.get(it.moimCode()),
                         0L
                 ))
@@ -316,9 +318,9 @@ public class MoimServiceImpl implements MoimService {
                 .map(it -> new MoimRecommendCardResult(
                         it.moimCode(),
                         it.title(),
-                        it.date(),
+                        it.moimDate(),
                         0,
-                        it.maxParticipants(),
+                        it.maxParticipantCount(),
                         thumbMap.get(it.moimCode()),
                         likedSet.contains(it.moimCode())
                 ))
@@ -413,14 +415,11 @@ public class MoimServiceImpl implements MoimService {
                 .map(this::toImageResult)
                 .toList();
 
-        boolean liked = false;
-        if (memberCode != null && !memberCode.isBlank()) {
-            liked = likeRepository.existsByMemberCodeAndTargetCodeAndType(
-                    memberCode,
-                    moimCode,
-                    LikeType.M
-            );
-        }
+        boolean liked = likeRepository.existsByMemberCodeAndTargetCodeAndType(
+                memberCode,
+                moimCode,
+                LikeType.M
+        );
 
         long likeCount = likeRepository.countByTargetCodeAndType(moimCode, LikeType.M);
 
@@ -433,7 +432,7 @@ public class MoimServiceImpl implements MoimService {
         int participantCount = Math.toIntExact(participantCountLong);
         int extraParticipantCount = Math.max(0, participantCount - 1);
 
-        boolean owner = memberCode != null && memberCode.equals(detail.leaderMemberCode());
+        boolean owner = memberCode.equals(detail.leaderMemberCode());
 
         return new MoimDetailResult(
                 detail.moimCode(),
@@ -498,6 +497,7 @@ public class MoimServiceImpl implements MoimService {
         Set<String> likedSet = getLikedMoimCodes(command.getMemberCode(), moimCodes);
         Map<String, List<String>> categoryMap = moimCardSupportService.getMoimCategories(moimCodes);
         Map<String, Integer> participantMap = moimCardSupportService.getParticipantCounts(moimCodes);
+        Map<String, List<String>> profileMap = moimCardSupportService.getParticipantProfileUrls(moimCodes);
 
         Map<String, String> thumbMap = fileThumbnailService.getMoimThumbsWithPopupFallback(
                 toThumbTargetsForFilter(items)
@@ -520,7 +520,8 @@ public class MoimServiceImpl implements MoimService {
                             participantCount,
                             maxParticipantCount,
                             isFull,
-                            likedSet.contains(item.moimCode())
+                            likedSet.contains(item.moimCode()),
+                            profileMap.getOrDefault(item.moimCode(), List.of())
                     );
                 })
                 .toList();
@@ -539,9 +540,6 @@ public class MoimServiceImpl implements MoimService {
     }
 
     private Set<String> getLikedMoimCodes(String memberCode, List<String> moimCodes) {
-        if (memberCode == null || memberCode.isBlank()) {
-            return Set.of();
-        }
         if (moimCodes == null || moimCodes.isEmpty()) {
             return Set.of();
         }

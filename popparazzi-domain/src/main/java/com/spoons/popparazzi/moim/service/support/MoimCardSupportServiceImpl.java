@@ -67,7 +67,7 @@ public class MoimCardSupportServiceImpl implements MoimCardSupportService {
 
     @Override
     public Set<String> getLikedMoimCodes(String memberCode, List<String> moimCodes) {
-        if (memberCode == null || memberCode.isBlank() || moimCodes == null || moimCodes.isEmpty()) {
+        if (moimCodes == null || moimCodes.isEmpty()) {
             return Set.of();
         }
 
@@ -86,6 +86,7 @@ public class MoimCardSupportServiceImpl implements MoimCardSupportService {
                 moimQueryRepository.findParticipantProfiles(moimCodes);
 
         return rows.stream()
+                .filter(row -> row.profileUrl() != null && !row.profileUrl().isBlank())
                 .collect(Collectors.groupingBy(
                         MoimParticipantProfileQuery::moimCode,
                         LinkedHashMap::new,

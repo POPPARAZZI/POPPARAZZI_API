@@ -6,6 +6,6 @@ public record NewestMoimItemQuery(
         String moimCode,
         String popupCode,
         String title,
-        LocalDateTime date,
-        Integer maxParticipants
+        LocalDateTime moimDate,
+        Integer maxParticipantCount
 ) {}

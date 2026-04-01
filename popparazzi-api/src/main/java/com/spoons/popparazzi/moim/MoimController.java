@@ -3,6 +3,7 @@ package com.spoons.popparazzi.moim;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.spoons.popparazzi.error.exception.BusinessException;
+import com.spoons.popparazzi.jwt.security.CustomUserDetails;
 import com.spoons.popparazzi.moim.dto.command.ApplyMoimCommand;
 import com.spoons.popparazzi.moim.dto.command.MoimFilterCommand;
 import com.spoons.popparazzi.moim.dto.command.MoimSearchCommand;
@@ -10,8 +11,25 @@ import com.spoons.popparazzi.moim.dto.request.ApplyMoimRequest;
 import com.spoons.popparazzi.moim.dto.request.CreateMoimRequest;
 import com.spoons.popparazzi.moim.dto.request.MoimSearchRequest;
 import com.spoons.popparazzi.moim.dto.request.UpdateMoimRequest;
-import com.spoons.popparazzi.moim.dto.response.*;
-import com.spoons.popparazzi.moim.dto.result.*;
+import com.spoons.popparazzi.moim.dto.response.CreateMoimResponse;
+import com.spoons.popparazzi.moim.dto.response.HotMoimCardResponse;
+import com.spoons.popparazzi.moim.dto.response.MoimApplyInfoResponse;
+import com.spoons.popparazzi.moim.dto.response.MoimDetailImageResponse;
+import com.spoons.popparazzi.moim.dto.response.MoimDetailResponse;
+import com.spoons.popparazzi.moim.dto.response.MoimFilterItemResponse;
+import com.spoons.popparazzi.moim.dto.response.MoimFilterSliceResponse;
+import com.spoons.popparazzi.moim.dto.response.NewesCardResponse;
+import com.spoons.popparazzi.moim.dto.response.MoimParticipantsResponse;
+import com.spoons.popparazzi.moim.dto.response.MoimRecommendCardResponse;
+import com.spoons.popparazzi.moim.dto.response.MoimSearchItemResponse;
+import com.spoons.popparazzi.moim.dto.response.MoimSearchResponse;
+import com.spoons.popparazzi.moim.dto.response.UpdateMoimResponse;
+import com.spoons.popparazzi.moim.dto.result.MoimApplyInfoResult;
+import com.spoons.popparazzi.moim.dto.result.MoimDetailResult;
+import com.spoons.popparazzi.moim.dto.result.MoimFilterSliceResult;
+import com.spoons.popparazzi.moim.dto.result.MoimParticipantsResult;
+import com.spoons.popparazzi.moim.dto.result.MoimSearchCardResult;
+import com.spoons.popparazzi.moim.dto.result.MoimSearchResult;
 import com.spoons.popparazzi.moim.enums.MoimViewType;
 import com.spoons.popparazzi.moim.error.MoimErrorCode;
 import com.spoons.popparazzi.moim.service.MoimApplyService;
@@ -27,7 +45,17 @@ import jakarta.validation.Validator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
@@ -50,21 +78,24 @@ public class MoimController {
     /*----------------------------------- 모임 메인 -----------------------------------*/
     // 1. 신규 오픈 모임
     @GetMapping("/main/new")
-    public ApiResponse<List<MoimMainResponse>> getNewestMoimsForMain(
+    public ApiResponse<List<NewesCardResponse>> getNewestMoimsForMain(
             @RequestParam(defaultValue = "3") int limit,
-            @RequestHeader(value = "X-MEMBER-CODE", required = false) String memberCode
+            @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
+        String memberCode = userDetails.getMemberCode();
+
         var result = moimService.getNewestMoimsForMain(limit, memberCode);
 
         var response = result.stream()
-                .map(it -> new MoimMainResponse(
+                .map(it -> new NewesCardResponse(
                         it.moimCode(),
-                        it.title(),
-                        it.date(),
-                        it.maxParticipants(),
                         it.thumbnailUrl(),
                         it.liked(),
-                        it.categories()
+                        it.categories(),
+                        it.title(),
+                        it.moimDate(),
+                        it.participantProfileUrls(),
+                        it.maxParticipantCount()
                 ))
                 .toList();
 
@@ -96,8 +127,10 @@ public class MoimController {
     // 3. 즐겨찾기 기반 모임 추천
     @GetMapping("/main/recommend")
     public ApiResponse<List<MoimRecommendCardResponse>> recommendForMember(
-            @RequestHeader(value = "X-MEMBER-CODE") String memberCode
+            @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
+        String memberCode = userDetails.getMemberCode();
+
         var result = moimService.recommendForMember(memberCode);
 
         var response = result.stream()
@@ -120,15 +153,17 @@ public class MoimController {
     @GetMapping("/{moimCode}")
     public ApiResponse<MoimDetailResponse> getMoimDetail(
             @PathVariable String moimCode,
-            @RequestHeader("X-MEMBER-CODE") String memberCode
+            @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
+        String memberCode = userDetails.getMemberCode();
+
         MoimDetailResult result = moimService.getMoimDetail(moimCode, memberCode);
         MoimDetailResponse response = toResponse(result);
+
         return ApiResponse.success(response);
     }
 
     private MoimDetailResponse toResponse(MoimDetailResult result) {
-
         List<MoimDetailImageResponse> images =
                 result.images()
                         .stream()
@@ -159,8 +194,10 @@ public class MoimController {
     @GetMapping("/{moimCode}/apply")
     public ApiResponse<MoimApplyInfoResponse> getMoimApplyInfo(
             @PathVariable String moimCode,
-            @RequestHeader("X-MEMBER-CODE") String memberCode
+            @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
+        String memberCode = userDetails.getMemberCode();
+
         MoimApplyInfoResult result = moimApplyService.getApplyInfo(moimCode, memberCode);
 
         MoimApplyInfoResponse response = new MoimApplyInfoResponse(
@@ -176,8 +213,10 @@ public class MoimController {
     @GetMapping("/{moimCode}/participants")
     public ApiResponse<MoimParticipantsResponse> getParticipants(
             @PathVariable String moimCode,
-            @RequestHeader("X-MEMBER-CODE") String memberCode
+            @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
+        String memberCode = userDetails.getMemberCode();
+
         MoimParticipantsResult result = moimApplyService.getParticipants(moimCode, memberCode);
 
         MoimParticipantsResponse response = MoimParticipantsResponse.from(result);
@@ -188,7 +227,7 @@ public class MoimController {
     // 4. 모임 필터링 조회
     @GetMapping
     public ApiResponse<MoimFilterSliceResponse> getMoimsByFilter(
-            @RequestHeader(value = "X-MEMBER-CODE", required = false) String memberCode,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestParam MoimViewType viewType,
             @RequestParam(required = false) String sido,
             @RequestParam(required = false) String sigungu,
@@ -197,6 +236,8 @@ public class MoimController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
+        String memberCode = userDetails.getMemberCode();
+
         MoimFilterCommand command = MoimFilterCommand.builder()
                 .memberCode(memberCode)
                 .viewType(viewType)
@@ -215,14 +256,15 @@ public class MoimController {
                         it.moimCode(),
                         it.thumbnailUrl(),
                         it.title(),
-                        it.categoryNames(),
+                        it.categories(),
                         it.address(),
                         it.moimDate(),
                         it.leaderNickname(),
                         it.participantCount(),
                         it.maxParticipantCount(),
                         it.isFull(),
-                        it.isLiked()
+                        it.liked(),
+                        it.participantProfileUrls()
                 ))
                 .toList();
 
@@ -239,9 +281,11 @@ public class MoimController {
     /*----------------------------------- 모임 검색 -----------------------------------*/
     @PostMapping("/search")
     public ApiResponse<MoimSearchResponse> searchMoims(
-            @RequestHeader("X-MEMBER-CODE") String memberCode,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestBody MoimSearchRequest request
     ) {
+        String memberCode = userDetails.getMemberCode();
+
         MoimSearchCommand command = new MoimSearchCommand(
                 memberCode,
                 request.getKeyword(),
@@ -291,20 +335,23 @@ public class MoimController {
                         card.address(),
                         card.participantProfileUrls(),
                         card.leaderNickname(),
-                        card.currentCount(),
-                        card.maxCount(),
+                        card.participantCount(),
+                        card.maxParticipantCount(),
                         card.closingSoon()
                 ))
                 .toList();
     }
+
     /*----------------------------------- 모임 CRUD -----------------------------------*/
     // 1. 모임 생성
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse<CreateMoimResponse> createMoim(
-            @RequestHeader("X-MEMBER-CODE") String memberCode,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestPart("request") String requestJson,
             @RequestPart(value = "files", required = false) List<MultipartFile> files
     ) {
+        String memberCode = userDetails.getMemberCode();
+
         CreateMoimRequest request = parseRequest(requestJson, CreateMoimRequest.class);
         validate(request);
 
@@ -316,10 +363,12 @@ public class MoimController {
     @PatchMapping(value = "/{moimCode}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse<UpdateMoimResponse> updateMoim(
             @PathVariable String moimCode,
-            @RequestHeader("X-MEMBER-CODE") String memberCode,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestPart("request") String requestJson,
             @RequestPart(value = "files", required = false) List<MultipartFile> files
     ) {
+        String memberCode = userDetails.getMemberCode();
+
         UpdateMoimRequest request = parseRequest(requestJson, UpdateMoimRequest.class);
         validate(request);
 
@@ -336,8 +385,10 @@ public class MoimController {
     @DeleteMapping("/{moimCode}")
     public ApiResponse<Void> deleteMoim(
             @PathVariable String moimCode,
-            @RequestHeader("X-MEMBER-CODE") String requesterMemberCode
+            @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
+        String requesterMemberCode = userDetails.getMemberCode();
+
         moimCommandService.delete(moimCode, requesterMemberCode);
         return ApiResponse.success(null);
     }
@@ -347,8 +398,9 @@ public class MoimController {
     public ApiResponse<Void> applyMoim(
             @PathVariable String moimCode,
             @RequestBody @Valid ApplyMoimRequest request,
-            @RequestHeader("X-MEMBER-CODE") String memberCode
+            @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
+        String memberCode = userDetails.getMemberCode();
 
         ApplyMoimCommand command = new ApplyMoimCommand(request.answer());
         moimApplyService.apply(moimCode, memberCode, command);
@@ -356,7 +408,6 @@ public class MoimController {
     }
 
     /*----------------------------------- 공통 -----------------------------------*/
-    // 1. JSON 파싱
     private <T> T parseRequest(String requestJson, Class<T> clazz) {
         try {
             return objectMapper.readValue(requestJson, clazz);
@@ -365,7 +416,6 @@ public class MoimController {
         }
     }
 
-    // 2. 어노테이션 검증
     private <T> void validate(T request) {
         Set<ConstraintViolation<T>> violations = validator.validate(request);
 

@@ -104,8 +104,8 @@ public class MoimSearchServiceImpl implements MoimSearchService {
 
         List<MoimSearchCardResult> cards = items.stream()
                 .map(item -> {
-                    int currentCount = participantCountMap.getOrDefault(item.moimCode(), 1);
-                    int maxCount = item.maxCount() == null ? 0 : item.maxCount();
+                    int participantCount = participantCountMap.getOrDefault(item.moimCode(), 1);
+                    int maxParticipantCount = item.maxCount() == null ? 0 : item.maxCount();
 
                     return new MoimSearchCardResult(
                             item.moimCode(),
@@ -116,9 +116,9 @@ public class MoimSearchServiceImpl implements MoimSearchService {
                             item.address(),
                             participantProfileMap.getOrDefault(item.moimCode(), List.of()),
                             item.leaderNickname(),
-                            currentCount,
-                            maxCount,
-                            isClosingSoon(currentCount, maxCount)
+                            participantCount,
+                            maxParticipantCount,
+                            isClosingSoon(participantCount, maxParticipantCount)
                     );
                 })
                 .toList();

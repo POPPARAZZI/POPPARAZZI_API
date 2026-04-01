@@ -54,7 +54,7 @@ public class LikeQueryRepositoryImpl implements LikeQueryRepository {
             LikeType type,
             List<String> targetCodes
     ) {
-        if (memberCode == null || type == null || targetCodes == null || targetCodes.isEmpty()) {
+        if (type == null || targetCodes == null || targetCodes.isEmpty()) {
             return List.of();
         }
 

@@ -141,9 +141,6 @@ public class MoimCommandServiceImpl implements MoimCommandService {
         if (command == null) {
             throw new BusinessException(MoimErrorCode.INVALID_REQUEST);
         }
-        if (requesterMemberCode == null || requesterMemberCode.isBlank()) {
-            throw new BusinessException(MoimErrorCode.INVALID_REQUEST);
-        }
 
         String moimCode = command.getMoimCode();
 

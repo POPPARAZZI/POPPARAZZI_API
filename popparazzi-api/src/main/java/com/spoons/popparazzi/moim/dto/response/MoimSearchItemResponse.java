@@ -32,10 +32,10 @@ public record MoimSearchItemResponse(
         String leaderNickname,
 
         @Schema(description = "현재 참여 인원", example = "3")
-        int currentCount,
+        int participantCount,
 
         @Schema(description = "최대 정원", example = "4")
-        int maxCount,
+        int maxParticipantCount,
 
         @Schema(description = "마감 임박 여부", example = "true")
         boolean closingSoon

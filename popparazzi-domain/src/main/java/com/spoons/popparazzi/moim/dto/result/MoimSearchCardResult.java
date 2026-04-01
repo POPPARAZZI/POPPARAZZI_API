@@ -11,8 +11,8 @@ public record MoimSearchCardResult(
         String address,
         List<String> participantProfileUrls,
         String leaderNickname,
-        int currentCount,
-        int maxCount,
+        int participantCount,
+        int maxParticipantCount,
         boolean closingSoon
 ) {
 }

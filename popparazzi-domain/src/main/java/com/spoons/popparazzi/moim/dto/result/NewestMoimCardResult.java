@@ -7,9 +7,10 @@ public record NewestMoimCardResult(
         String moimCode,
         String popupCode,
         String title,
-        LocalDateTime date,
-        Integer maxParticipants,
+        LocalDateTime moimDate,
+        Integer maxParticipantCount,
         String thumbnailUrl,
         boolean liked,
-        List<String> categories
+        List<String> categories,
+        List<String> participantProfileUrls
 ) {}

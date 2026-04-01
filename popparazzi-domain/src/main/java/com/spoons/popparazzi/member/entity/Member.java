@@ -85,6 +85,7 @@ public class Member {
         this.snsType = snsType;
         this.memberUuid = uuid.toString();
         this.authYn = YesNo.NO;
+        this.regDt = LocalDateTime.now();
         this.role = MemberRole.USER;
         this.status = MemberStatus.ACTIVE;
     }
