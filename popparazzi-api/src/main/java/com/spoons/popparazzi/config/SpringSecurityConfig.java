@@ -66,6 +66,7 @@ public class SpringSecurityConfig {
                         .requestMatchers("/board/**").permitAll()
                         .requestMatchers("/test/**").permitAll()
                         .requestMatchers("/files/**").permitAll()
+                        .requestMatchers("/popups/**").permitAll()
 
                         // Preflight 요청 허용
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()

@@ -4,7 +4,7 @@ import com.spoons.popparazzi.file.dto.query.FileThumbQuery;
 import com.spoons.popparazzi.file.enums.FileType;
 import com.spoons.popparazzi.file.repository.FileThumbQueryRepository;
 import com.spoons.popparazzi.like.enums.LikeType;
-import com.spoons.popparazzi.like.repository.LikeRepository;
+import com.spoons.popparazzi.like.repository.LikeQueryRepository;
 import com.spoons.popparazzi.popup.dto.query.PopupSelectionItemQuery;
 import com.spoons.popparazzi.popup.dto.result.PopupSelectionItemResult;
 import com.spoons.popparazzi.popup.repository.PopupSelectionQueryRepository;
@@ -24,9 +24,9 @@ import java.util.stream.Collectors;
 public class PopupSelectionServiceImpl implements PopupSelectionService {
 
     private final PopupSelectionQueryRepository popupSelectionQueryRepository;
-    private final FileThumbQueryRepository fileThumbQueryRepository;
-    private final LikeRepository likeRepository;
     private final PopupViewHistoryQueryRepository popupViewHistoryQueryRepository;
+    private final FileThumbQueryRepository fileThumbQueryRepository;
+    private final LikeQueryRepository likeQueryRepository;
 
     @Override
     public List<PopupSelectionItemResult> getNewestSelectionItems(int limit) {
@@ -45,24 +45,21 @@ public class PopupSelectionServiceImpl implements PopupSelectionService {
                 .toList();
 
         Map<String, String> thumbnailMap = getPopupThumbnailMap(popupCodes);
+        Map<String, Long> likeCountMap = likeQueryRepository.countTargetsByType(LikeType.P, popupCodes);
+        Map<String, Long> viewCountMap = popupViewHistoryQueryRepository.countViewsByPopupCodes(popupCodes);
 
         return queries.stream()
-                .map(query -> toResult(query, thumbnailMap))
+                .map(query -> toResult(query, thumbnailMap, likeCountMap, viewCountMap))
                 .toList();
     }
 
     private PopupSelectionItemResult toResult(
             PopupSelectionItemQuery query,
-            Map<String, String> thumbnailMap
+            Map<String, String> thumbnailMap,
+            Map<String, Long> likeCountMap,
+            Map<String, Long> viewCountMap
     ) {
         String popupCode = query.popupCode();
-
-        long likeCount = likeRepository.countByTargetCodeAndType(
-                popupCode,
-                LikeType.P
-        );
-
-        long viewCount = popupViewHistoryQueryRepository.countViews(popupCode);
 
         return new PopupSelectionItemResult(
                 query.popupCode(),
@@ -71,9 +68,9 @@ public class PopupSelectionServiceImpl implements PopupSelectionService {
                 query.sigungu(),
                 query.startDt(),
                 query.endDt(),
-                likeCount,
-                viewCount,
-                thumbnailMap.get(query.popupCode())
+                likeCountMap.getOrDefault(popupCode, 0L),
+                viewCountMap.getOrDefault(popupCode, 0L),
+                thumbnailMap.get(popupCode)
         );
     }
 

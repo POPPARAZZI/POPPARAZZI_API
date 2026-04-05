@@ -2,15 +2,20 @@ package com.spoons.popparazzi.like.repository;
 
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import com.spoons.popparazzi.like.dto.query.LikeCountQuery;
 import com.spoons.popparazzi.like.dto.query.LikeRankQuery;
-import com.spoons.popparazzi.like.entity.QLikeMapping;
 import com.spoons.popparazzi.like.enums.LikeType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import static com.spoons.popparazzi.like.entity.QLikeMapping.likeMapping;
 
 @Repository
 @RequiredArgsConstructor
@@ -28,21 +33,19 @@ public class LikeQueryRepositoryImpl implements LikeQueryRepository {
             return List.of();
         }
 
-        QLikeMapping like = QLikeMapping.likeMapping;
-
         return queryFactory
                 .select(Projections.constructor(
                         LikeRankQuery.class,
-                        like.targetCode,
-                        like.count()
+                        likeMapping.targetCode,
+                        likeMapping.count()
                 ))
-                .from(like)
+                .from(likeMapping)
                 .where(
-                        like.type.eq(type),
-                        like.createdAt.goe(since)
+                        likeMapping.type.eq(type),
+                        likeMapping.createdAt.goe(since)
                 )
-                .groupBy(like.targetCode)
-                .orderBy(like.count().desc())
+                .groupBy(likeMapping.targetCode)
+                .orderBy(likeMapping.count().desc())
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
@@ -58,16 +61,41 @@ public class LikeQueryRepositoryImpl implements LikeQueryRepository {
             return List.of();
         }
 
-        QLikeMapping like = QLikeMapping.likeMapping;
-
         return queryFactory
-                .select(like.targetCode)
-                .from(like)
+                .select(likeMapping.targetCode)
+                .from(likeMapping)
                 .where(
-                        like.memberCode.eq(memberCode),
-                        like.type.eq(type),
-                        like.targetCode.in(targetCodes)
+                        likeMapping.memberCode.eq(memberCode),
+                        likeMapping.type.eq(type),
+                        likeMapping.targetCode.in(targetCodes)
                 )
                 .fetch();
+    }
+
+    @Override
+    public Map<String, Long> countTargetsByType(LikeType type, List<String> targetCodes) {
+        if (type == null || targetCodes == null || targetCodes.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        List<LikeCountQuery> rows = queryFactory
+                .select(Projections.constructor(
+                        LikeCountQuery.class,
+                        likeMapping.targetCode,
+                        likeMapping.count()
+                ))
+                .from(likeMapping)
+                .where(
+                        likeMapping.type.eq(type),
+                        likeMapping.targetCode.in(targetCodes)
+                )
+                .groupBy(likeMapping.targetCode)
+                .fetch();
+
+        return rows.stream()
+                .collect(Collectors.toMap(
+                        LikeCountQuery::targetCode,
+                        LikeCountQuery::likeCount
+                ));
     }
 }

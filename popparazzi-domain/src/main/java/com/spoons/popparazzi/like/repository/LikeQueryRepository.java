@@ -6,6 +6,7 @@ import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 public interface LikeQueryRepository {
 
@@ -22,4 +23,7 @@ public interface LikeQueryRepository {
             LikeType type,
             List<String> targetCodes
     );
+
+    // 3) 좋아요수 전체 벌크 조회
+    Map<String, Long> countTargetsByType(LikeType type, List<String> targetCodes);
 }
