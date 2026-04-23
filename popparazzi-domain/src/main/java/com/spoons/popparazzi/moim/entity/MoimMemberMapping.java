@@ -47,6 +47,28 @@ public class MoimMemberMapping {
     // 모임 승인
     public void approve() {
         this.isApproved = true;
+        this.joinYn = YesNo.YES;
+    }
+
+    // 모임 거절
+    public void reject() {
+        this.isApproved = false;
+        this.joinYn = YesNo.NO;
+    }
+
+    // 대기 상태인지 확인
+    public boolean isPending() {
+        return !this.isApproved && this.joinYn != null && this.joinYn.isYes();
+    }
+
+    // 승인 완료 상태인지 확인
+    public boolean isApprovedMember() {
+        return this.isApproved && this.joinYn != null && this.joinYn.isYes();
+    }
+
+    // 거절 상태인지 확인
+    public boolean isRejected() {
+        return !this.isApproved && this.joinYn != null && this.joinYn.isNo();
     }
 
     public boolean isJoined() {

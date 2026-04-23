@@ -1,5 +1,6 @@
 package com.spoons.popparazzi.popup.dto.response;
 
+import com.spoons.popparazzi.popup.dto.result.PopupSearchMatchResult;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
@@ -31,4 +32,16 @@ public record PopupSearchMatchResponse(
         @Schema(description = "조회수", example = "0")
         long viewCount
 ) {
+        public static PopupSearchMatchResponse from(PopupSearchMatchResult result) {
+                return new PopupSearchMatchResponse(
+                        result.popupCode(),
+                        result.thumbnailUrl(),
+                        result.title(),
+                        result.address(),
+                        result.startDt(),
+                        result.endDt(),
+                        result.likeCount(),
+                        result.viewCount()
+                );
+        }
 }
