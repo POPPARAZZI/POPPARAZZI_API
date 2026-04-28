@@ -7,8 +7,7 @@ import com.spoons.popparazzi.like.enums.LikeType;
 import com.spoons.popparazzi.like.repository.LikeQueryRepository;
 import com.spoons.popparazzi.popup.dto.query.PopupSelectionItemQuery;
 import com.spoons.popparazzi.popup.dto.result.PopupSelectionItemResult;
-import com.spoons.popparazzi.popup.repository.PopupSelectionQueryRepository;
-import com.spoons.popparazzi.popup.repository.PopupViewHistoryQueryRepository;
+import com.spoons.popparazzi.popup.repository.PopupQueryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,22 +22,16 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class PopupSelectionServiceImpl implements PopupSelectionService {
 
-    private final PopupSelectionQueryRepository popupSelectionQueryRepository;
-    private final PopupViewHistoryQueryRepository popupViewHistoryQueryRepository;
+    private final PopupQueryRepository popupQueryRepository;
     private final FileThumbQueryRepository fileThumbQueryRepository;
     private final LikeQueryRepository likeQueryRepository;
 
     @Override
     public List<PopupSelectionItemResult> getNewestSelectionItems(int limit) {
-        if (limit <= 0) {
-            return Collections.emptyList();
-        }
+        if (limit <= 0) return Collections.emptyList();
 
-        List<PopupSelectionItemQuery> queries = popupSelectionQueryRepository.findNewestSelections(limit);
-
-        if (queries.isEmpty()) {
-            return Collections.emptyList();
-        }
+        List<PopupSelectionItemQuery> queries = popupQueryRepository.findNewestSelections(limit);
+        if (queries.isEmpty()) return Collections.emptyList();
 
         List<String> popupCodes = queries.stream()
                 .map(PopupSelectionItemQuery::popupCode)
@@ -46,12 +39,16 @@ public class PopupSelectionServiceImpl implements PopupSelectionService {
 
         Map<String, String> thumbnailMap = getPopupThumbnailMap(popupCodes);
         Map<String, Long> likeCountMap = likeQueryRepository.countTargetsByType(LikeType.P, popupCodes);
-        Map<String, Long> viewCountMap = popupViewHistoryQueryRepository.countViewsByPopupCodes(popupCodes);
+        Map<String, Long> viewCountMap = popupQueryRepository.countViewsByPopupCodes(popupCodes);
 
         return queries.stream()
                 .map(query -> toResult(query, thumbnailMap, likeCountMap, viewCountMap))
                 .toList();
     }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // 내부 변환
+    // ─────────────────────────────────────────────────────────────────────────
 
     private PopupSelectionItemResult toResult(
             PopupSelectionItemQuery query,
@@ -62,7 +59,7 @@ public class PopupSelectionServiceImpl implements PopupSelectionService {
         String popupCode = query.popupCode();
 
         return new PopupSelectionItemResult(
-                query.popupCode(),
+                popupCode,
                 query.title(),
                 query.sido(),
                 query.sigungu(),
@@ -77,9 +74,7 @@ public class PopupSelectionServiceImpl implements PopupSelectionService {
     private Map<String, String> getPopupThumbnailMap(List<String> popupCodes) {
         List<FileThumbQuery> thumbnails = fileThumbQueryRepository.findFirstThumbs(FileType.P, popupCodes);
 
-        if (thumbnails == null || thumbnails.isEmpty()) {
-            return Collections.emptyMap();
-        }
+        if (thumbnails == null || thumbnails.isEmpty()) return Collections.emptyMap();
 
         return thumbnails.stream()
                 .collect(Collectors.toMap(
