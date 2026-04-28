@@ -1,5 +1,6 @@
 package com.spoons.popparazzi.moim.dto.response;
 
+import com.spoons.popparazzi.moim.dto.result.MoimSearchResult;
 import com.spoons.popparazzi.popup.dto.response.PopupSearchMatchResponse;
 import io.swagger.v3.oas.annotations.media.Schema;
 
@@ -29,4 +30,17 @@ public record MoimSearchResponse(
         @Schema(description = "전체 페이지 수", example = "3")
         int totalPage
 ) {
+        public static MoimSearchResponse from(MoimSearchResult result) {
+                return new MoimSearchResponse(
+                        result.keyword(),
+                        PopupSearchMatchResponse.from(result.matchedPopup()),
+                        result.moims().stream()
+                                .map(MoimSearchItemResponse::from)
+                                .toList(),
+                        result.currentPage(),
+                        result.recordCountPerPage(),
+                        result.totalRecord(),
+                        result.totalPage()
+                );
+        }
 }

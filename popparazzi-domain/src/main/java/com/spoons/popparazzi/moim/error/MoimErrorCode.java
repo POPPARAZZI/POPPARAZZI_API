@@ -33,7 +33,15 @@ public enum MoimErrorCode implements ErrorCode {
     // =========================
     // 모임 검색
     // =========================
-    INVALID_SEARCH_KEYWORD(-2010, "잘못된 검색 키워드입니다.","MOIM");
+    INVALID_SEARCH_KEYWORD(-2010, "잘못된 검색 키워드입니다.", "MOIM"),
+
+    // =========================
+    // 모임 승인 / 거절
+    // =========================
+    MOIM_APPROVE_REJECT_FORBIDDEN(-2011, "모임장만 승인/거절할 수 있습니다.", "MOIM"),
+    MOIM_APPLY_NOT_FOUND(-2012, "모임 신청 내역을 찾을 수 없습니다.", "MOIM"),
+    MOIM_APPLY_ALREADY_PROCESSED(-2013, "이미 처리된 모임 신청입니다.", "MOIM"),
+    MOIM_MEMBER_BLOCKED(-2014, "차단 관계가 있는 회원은 승인할 수 없습니다.", "MOIM");
 
     private final int code;
     private final String message;

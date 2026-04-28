@@ -4,41 +4,14 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.spoons.popparazzi.error.exception.BusinessException;
 import com.spoons.popparazzi.jwt.security.CustomUserDetails;
-import com.spoons.popparazzi.moim.dto.command.ApplyMoimCommand;
-import com.spoons.popparazzi.moim.dto.command.MoimFilterCommand;
-import com.spoons.popparazzi.moim.dto.command.MoimSearchCommand;
-import com.spoons.popparazzi.moim.dto.request.ApplyMoimRequest;
-import com.spoons.popparazzi.moim.dto.request.CreateMoimRequest;
-import com.spoons.popparazzi.moim.dto.request.MoimSearchRequest;
-import com.spoons.popparazzi.moim.dto.request.UpdateMoimRequest;
-import com.spoons.popparazzi.moim.dto.response.CreateMoimResponse;
-import com.spoons.popparazzi.moim.dto.response.HotMoimCardResponse;
-import com.spoons.popparazzi.moim.dto.response.MoimApplyInfoResponse;
-import com.spoons.popparazzi.moim.dto.response.MoimDetailImageResponse;
-import com.spoons.popparazzi.moim.dto.response.MoimDetailResponse;
-import com.spoons.popparazzi.moim.dto.response.MoimFilterItemResponse;
-import com.spoons.popparazzi.moim.dto.response.MoimFilterSliceResponse;
-import com.spoons.popparazzi.moim.dto.response.NewesCardResponse;
-import com.spoons.popparazzi.moim.dto.response.MoimParticipantsResponse;
-import com.spoons.popparazzi.moim.dto.response.MoimRecommendCardResponse;
-import com.spoons.popparazzi.moim.dto.response.MoimSearchItemResponse;
-import com.spoons.popparazzi.moim.dto.response.MoimSearchResponse;
-import com.spoons.popparazzi.moim.dto.response.UpdateMoimResponse;
-import com.spoons.popparazzi.moim.dto.result.MoimApplyInfoResult;
-import com.spoons.popparazzi.moim.dto.result.MoimDetailResult;
-import com.spoons.popparazzi.moim.dto.result.MoimFilterSliceResult;
-import com.spoons.popparazzi.moim.dto.result.MoimParticipantsResult;
-import com.spoons.popparazzi.moim.dto.result.MoimSearchCardResult;
-import com.spoons.popparazzi.moim.dto.result.MoimSearchResult;
-import com.spoons.popparazzi.moim.enums.MoimViewType;
+import com.spoons.popparazzi.moim.dto.request.*;
+import com.spoons.popparazzi.moim.dto.response.*;
 import com.spoons.popparazzi.moim.error.MoimErrorCode;
 import com.spoons.popparazzi.moim.service.MoimApplyService;
 import com.spoons.popparazzi.moim.service.MoimCommandService;
-import com.spoons.popparazzi.moim.service.MoimSearchService;
-import com.spoons.popparazzi.moim.service.MoimService;
-import com.spoons.popparazzi.popup.dto.response.PopupSearchMatchResponse;
-import com.spoons.popparazzi.popup.dto.result.PopupSearchMatchResult;
+import com.spoons.popparazzi.moim.service.MoimQueryService;
 import com.spoons.popparazzi.response.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Valid;
 import jakarta.validation.Validator;
@@ -46,19 +19,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RequestPart;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
 
@@ -66,300 +29,203 @@ import java.util.Set;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/moim")
+@Tag(name = "모임", description = "모임 생성/수정/삭제/조회/검색/필터/신청 API")
 public class MoimController {
 
     private final ObjectMapper objectMapper;
-    private final MoimService moimService;
+    private final MoimQueryService moimQueryService;
     private final MoimCommandService moimCommandService;
     private final MoimApplyService moimApplyService;
-    private final MoimSearchService moimSearchService;
     private final Validator validator;
 
     /*----------------------------------- 모임 메인 -----------------------------------*/
-    // 1. 신규 오픈 모임
+
+    /**
+     * @methodName  : getNewestMoimsForMain
+     * @author      : seulgi Yang
+     * @param       : limit, userDetails
+     * @returnType  : ApiResponse<List<NewesCardResponse>>
+     * @desc        : 메인 화면 신규 오픈 모임 카드 목록 조회
+     */
     @GetMapping("/main/new")
     public ApiResponse<List<NewesCardResponse>> getNewestMoimsForMain(
             @RequestParam(defaultValue = "3") int limit,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        String memberCode = userDetails.getMemberCode();
-
-        var result = moimService.getNewestMoimsForMain(limit, memberCode);
-
-        var response = result.stream()
-                .map(it -> new NewesCardResponse(
-                        it.moimCode(),
-                        it.thumbnailUrl(),
-                        it.liked(),
-                        it.categories(),
-                        it.title(),
-                        it.moimDate(),
-                        it.participantProfileUrls(),
-                        it.maxParticipantCount()
-                ))
+        var response = moimQueryService.getNewestMoimsForMain(limit, userDetails.getMemberCode())
+                .stream()
+                .map(NewesCardResponse::from)
                 .toList();
 
         return ApiResponse.success(response);
     }
 
-    // 2. 지금 핫한 모임
+    /**
+     * @methodName  : getHotMoimsForMain
+     * @author      : seulgi Yang
+     * @param       : limit
+     * @returnType  : ApiResponse<List<HotMoimCardResponse>>
+     * @desc        : 메인 화면 핫 모임 카드 목록 조회 (오늘 좋아요 기준, 폴백: 최신순)
+     */
     @GetMapping("/main/hot")
     public ApiResponse<List<HotMoimCardResponse>> getHotMoimsForMain(
             @RequestParam(defaultValue = "10") int limit
     ) {
-        var result = moimService.getHotMoimCardsForMain(limit);
-
-        var response = result.stream()
-                .map(it -> new HotMoimCardResponse(
-                        it.moimCode(),
-                        it.title(),
-                        it.date(),
-                        it.currentParticipants(),
-                        it.maxParticipants(),
-                        it.thumbnailUrl(),
-                        it.likeCountToday()
-                ))
+        var response = moimQueryService.getHotMoimCardsForMain(limit)
+                .stream()
+                .map(HotMoimCardResponse::from)
                 .toList();
 
         return ApiResponse.success(response);
     }
 
-    // 3. 즐겨찾기 기반 모임 추천
+    /**
+     * @methodName  : recommendForMember
+     * @author      : seulgi Yang
+     * @param       : userDetails
+     * @returnType  : ApiResponse<List<MoimRecommendCardResponse>>
+     * @desc        : 회원 선호 지역/카테고리 기반 모임 추천 (폴백: 최신순)
+     */
     @GetMapping("/main/recommend")
     public ApiResponse<List<MoimRecommendCardResponse>> recommendForMember(
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        String memberCode = userDetails.getMemberCode();
-
-        var result = moimService.recommendForMember(memberCode);
-
-        var response = result.stream()
-                .map(it -> new MoimRecommendCardResponse(
-                        it.moimCode(),
-                        it.title(),
-                        it.date(),
-                        it.currentParticipants(),
-                        it.maxParticipants(),
-                        it.thumbnailUrl(),
-                        it.liked()
-                ))
+        var response = moimQueryService.recommendForMember(userDetails.getMemberCode())
+                .stream()
+                .map(MoimRecommendCardResponse::from)
                 .toList();
 
         return ApiResponse.success(response);
     }
 
     /*----------------------------------- 모임 조회 -----------------------------------*/
-    // 1. 모임 상세 조회
+
+    /**
+     * @methodName  : getMoimDetail
+     * @author      : seulgi Yang
+     * @param       : moimCode, userDetails
+     * @returnType  : ApiResponse<MoimDetailResponse>
+     * @desc        : 모임 상세 조회
+     */
     @GetMapping("/{moimCode}")
     public ApiResponse<MoimDetailResponse> getMoimDetail(
             @PathVariable String moimCode,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        String memberCode = userDetails.getMemberCode();
-
-        MoimDetailResult result = moimService.getMoimDetail(moimCode, memberCode);
-        MoimDetailResponse response = toResponse(result);
-
-        return ApiResponse.success(response);
-    }
-
-    private MoimDetailResponse toResponse(MoimDetailResult result) {
-        List<MoimDetailImageResponse> images =
-                result.images()
-                        .stream()
-                        .map(it -> new MoimDetailImageResponse(
-                                it.fileSeq(),
-                                it.url()
-                        ))
-                        .toList();
-
-        return new MoimDetailResponse(
-                result.moimCode(),
-                result.title(),
-                result.content(),
-                result.moimDate(),
-                result.maxParticipants(),
-                result.leaderMemberCode(),
-                result.leaderProfileUrl(),
-                images,
-                result.likeCount(),
-                result.liked(),
-                result.participantCount(),
-                result.extraParticipantCount(),
-                result.owner()
+        return ApiResponse.success(
+                MoimDetailResponse.from(
+                        moimQueryService.getMoimDetail(moimCode, userDetails.getMemberCode())
+                )
         );
     }
 
-    // 2. 모임 신청 화면 조회
+    /**
+     * @methodName  : getMoimApplyInfo
+     * @author      : seulgi Yang
+     * @param       : moimCode, userDetails
+     * @returnType  : ApiResponse<MoimApplyInfoResponse>
+     * @desc        : 모임 신청 화면 조회 (방장 프로필 + 사전 질문)
+     */
     @GetMapping("/{moimCode}/apply")
     public ApiResponse<MoimApplyInfoResponse> getMoimApplyInfo(
             @PathVariable String moimCode,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        String memberCode = userDetails.getMemberCode();
-
-        MoimApplyInfoResult result = moimApplyService.getApplyInfo(moimCode, memberCode);
-
-        MoimApplyInfoResponse response = new MoimApplyInfoResponse(
-                result.leaderProfileImageUrl(),
-                result.leaderNickname(),
-                result.question()
+        return ApiResponse.success(
+                MoimApplyInfoResponse.from(
+                        moimApplyService.getApplyInfo(moimCode, userDetails.getMemberCode())
+                )
         );
-
-        return ApiResponse.success(response);
     }
 
-    // 3. 모임 참여 멤버 목록 조회
+    /**
+     * @methodName  : getParticipants
+     * @author      : seulgi Yang
+     * @param       : moimCode, userDetails
+     * @returnType  : ApiResponse<MoimParticipantsResponse>
+     * @desc        : 모임 참여자 목록 조회 (방장 우선 정렬)
+     */
     @GetMapping("/{moimCode}/participants")
     public ApiResponse<MoimParticipantsResponse> getParticipants(
             @PathVariable String moimCode,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        String memberCode = userDetails.getMemberCode();
-
-        MoimParticipantsResult result = moimApplyService.getParticipants(moimCode, memberCode);
-
-        MoimParticipantsResponse response = MoimParticipantsResponse.from(result);
-
-        return ApiResponse.success(response);
+        return ApiResponse.success(
+                MoimParticipantsResponse.from(
+                        moimApplyService.getParticipants(moimCode, userDetails.getMemberCode())
+                )
+        );
     }
 
-    // 4. 모임 필터링 조회
+    /**
+     * @methodName  : getMoimsByFilter
+     * @author      : seulgi Yang
+     * @param       : userDetails, request
+     * @returnType  : ApiResponse<MoimFilterSliceResponse>
+     * @desc        : 모임 필터 조회 (NEW / HOT / FAVORITE, 폴백: NEW)
+     */
     @GetMapping
     public ApiResponse<MoimFilterSliceResponse> getMoimsByFilter(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @RequestParam MoimViewType viewType,
-            @RequestParam(required = false) String sido,
-            @RequestParam(required = false) String sigungu,
-            @RequestParam(required = false) LocalDate date,
-            @RequestParam(required = false) List<String> categoryCodes,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
+            @Valid MoimFilterRequest request
     ) {
-        String memberCode = userDetails.getMemberCode();
-
-        MoimFilterCommand command = MoimFilterCommand.builder()
-                .memberCode(memberCode)
-                .viewType(viewType)
-                .sido(sido)
-                .sigungu(sigungu)
-                .date(date)
-                .categoryCodes(categoryCodes)
-                .page(page)
-                .size(size)
-                .build();
-
-        MoimFilterSliceResult result = moimService.getMoimsByFilter(command);
-
-        List<MoimFilterItemResponse> content = result.content().stream()
-                .map(it -> new MoimFilterItemResponse(
-                        it.moimCode(),
-                        it.thumbnailUrl(),
-                        it.title(),
-                        it.categories(),
-                        it.address(),
-                        it.moimDate(),
-                        it.leaderNickname(),
-                        it.participantCount(),
-                        it.maxParticipantCount(),
-                        it.isFull(),
-                        it.liked(),
-                        it.participantProfileUrls()
-                ))
-                .toList();
-
-        MoimFilterSliceResponse response = new MoimFilterSliceResponse(
-                content,
-                result.page(),
-                result.size(),
-                result.hasNext()
+        return ApiResponse.success(
+                MoimFilterSliceResponse.from(
+                        moimQueryService.getMoimsByFilter(request.toCommand(userDetails.getMemberCode()))
+                )
         );
-
-        return ApiResponse.success(response);
     }
 
     /*----------------------------------- 모임 검색 -----------------------------------*/
+
+    /**
+     * @methodName  : searchMoims
+     * @author      : seulgi Yang
+     * @param       : userDetails, request
+     * @returnType  : ApiResponse<MoimSearchResponse>
+     * @desc        : 모임 키워드 검색 (팝업 매칭 + 모임 목록 페이징)
+     */
     @PostMapping("/search")
     public ApiResponse<MoimSearchResponse> searchMoims(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @RequestBody MoimSearchRequest request
+            @RequestBody @Valid MoimSearchRequest request
     ) {
-        String memberCode = userDetails.getMemberCode();
-
-        MoimSearchCommand command = new MoimSearchCommand(
-                memberCode,
-                request.getKeyword(),
-                request.getPaginationInfo()
+        return ApiResponse.success(
+                MoimSearchResponse.from(
+                        moimQueryService.searchMoims(request.toCommand(userDetails.getMemberCode()))
+                )
         );
-
-        MoimSearchResult result = moimSearchService.searchMoims(command);
-
-        MoimSearchResponse response = new MoimSearchResponse(
-                result.keyword(),
-                toPopupResponse(result.matchedPopup()),
-                toItemResponses(result.moims()),
-                result.currentPage(),
-                result.recordCountPerPage(),
-                result.totalRecord(),
-                result.totalPage()
-        );
-
-        return ApiResponse.success(response);
-    }
-
-    private PopupSearchMatchResponse toPopupResponse(PopupSearchMatchResult popup) {
-        if (popup == null) {
-            return null;
-        }
-
-        return new PopupSearchMatchResponse(
-                popup.popupCode(),
-                popup.thumbnailUrl(),
-                popup.title(),
-                popup.address(),
-                popup.startDt(),
-                popup.endDt(),
-                popup.likeCount(),
-                popup.viewCount()
-        );
-    }
-
-    private List<MoimSearchItemResponse> toItemResponses(List<MoimSearchCardResult> cards) {
-        return cards.stream()
-                .map(card -> new MoimSearchItemResponse(
-                        card.moimCode(),
-                        card.thumbnailUrl(),
-                        card.liked(),
-                        card.categories(),
-                        card.title(),
-                        card.address(),
-                        card.participantProfileUrls(),
-                        card.leaderNickname(),
-                        card.participantCount(),
-                        card.maxParticipantCount(),
-                        card.closingSoon()
-                ))
-                .toList();
     }
 
     /*----------------------------------- 모임 CRUD -----------------------------------*/
-    // 1. 모임 생성
+
+    /**
+     * @methodName  : createMoim
+     * @author      : seulgi Yang
+     * @param       : userDetails, requestJson, files
+     * @returnType  : ApiResponse<CreateMoimResponse>
+     * @desc        : 모임 생성. 모임 저장 + 카테고리 매핑 + 파일 저장 일괄 처리
+     */
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse<CreateMoimResponse> createMoim(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestPart("request") String requestJson,
             @RequestPart(value = "files", required = false) List<MultipartFile> files
     ) {
-        String memberCode = userDetails.getMemberCode();
-
         CreateMoimRequest request = parseRequest(requestJson, CreateMoimRequest.class);
         validate(request);
 
-        String moimCode = moimCommandService.create(request.toCommand(), files, memberCode);
+        String moimCode = moimCommandService.create(request.toCommand(), files, userDetails.getMemberCode());
         return ApiResponse.success(new CreateMoimResponse(moimCode));
     }
 
-    // 2. 모임 수정
+    /**
+     * @methodName  : updateMoim
+     * @author      : seulgi Yang
+     * @param       : moimCode, userDetails, requestJson, files
+     * @returnType  : ApiResponse<UpdateMoimResponse>
+     * @desc        : 모임 수정. 카테고리 전체 교체 + 파일 유지/삭제/추가 처리
+     */
     @PatchMapping(value = "/{moimCode}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse<UpdateMoimResponse> updateMoim(
             @PathVariable String moimCode,
@@ -367,47 +233,94 @@ public class MoimController {
             @RequestPart("request") String requestJson,
             @RequestPart(value = "files", required = false) List<MultipartFile> files
     ) {
-        String memberCode = userDetails.getMemberCode();
-
         UpdateMoimRequest request = parseRequest(requestJson, UpdateMoimRequest.class);
         validate(request);
 
         String updatedMoimCode = moimCommandService.update(
-                request.toCommand(moimCode),
-                files,
-                memberCode
+                request.toCommand(moimCode), files, userDetails.getMemberCode()
         );
 
         return ApiResponse.success(new UpdateMoimResponse(updatedMoimCode));
     }
 
-    // 3. 모임 삭제
+    /**
+     * @methodName  : deleteMoim
+     * @author      : seulgi Yang
+     * @param       : moimCode, userDetails
+     * @returnType  : ApiResponse<Void>
+     * @desc        : 모임 삭제. 당일 삭제 불가. 첨부파일 삭제 + soft delete 처리
+     */
     @DeleteMapping("/{moimCode}")
     public ApiResponse<Void> deleteMoim(
             @PathVariable String moimCode,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        String requesterMemberCode = userDetails.getMemberCode();
-
-        moimCommandService.delete(moimCode, requesterMemberCode);
+        moimCommandService.delete(moimCode, userDetails.getMemberCode());
         return ApiResponse.success(null);
     }
 
-    // 4. 모임 신청
+    /**
+     * @methodName  : applyMoim
+     * @author      : seulgi Yang
+     * @param       : moimCode, request, userDetails
+     * @returnType  : ApiResponse<Void>
+     * @desc        : 모임 참여 신청. 방장 신청 불가, 중복 신청 불가, 정원 초과 불가
+     */
     @PostMapping("/{moimCode}/apply")
     public ApiResponse<Void> applyMoim(
             @PathVariable String moimCode,
             @RequestBody @Valid ApplyMoimRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        String memberCode = userDetails.getMemberCode();
-
-        ApplyMoimCommand command = new ApplyMoimCommand(request.answer());
-        moimApplyService.apply(moimCode, memberCode, command);
+        moimApplyService.apply(moimCode, userDetails.getMemberCode(), request.toCommand());
         return ApiResponse.success();
     }
 
-    /*----------------------------------- 공통 -----------------------------------*/
+    /**
+     * @methodName  : approveMoimApply
+     * @author      : seulgi Yang
+     * @param       : moimCode, request, userDetails
+     * @returnType  : ApiResponse<Void>
+     * @desc        : 모임 신청 승인. 모임장만 승인 가능, 대기 상태 신청 건만 승인 처리
+     */
+    @PatchMapping("/{moimCode}/apply/approve")
+    public ApiResponse<Void> approveMoimApply(
+            @PathVariable String moimCode,
+            @RequestBody @Valid MoimApproveRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        moimApplyService.approve(
+                moimCode,
+                userDetails.getMemberCode(),
+                request.getApplicantMemberCode()
+        );
+        return ApiResponse.success();
+    }
+
+    /**
+     * @methodName  : rejectMoimApply
+     * @author      : seulgi Yang
+     * @param       : moimCode, request, userDetails
+     * @returnType  : ApiResponse<Void>
+     * @desc        : 모임 신청 거절. 모임장만 거절 가능, 대기 상태 신청 건만 거절 처리
+     */
+    @PatchMapping("/{moimCode}/apply/reject")
+    public ApiResponse<Void> rejectMoimApply(
+            @PathVariable String moimCode,
+            @RequestBody @Valid MoimRejectRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        moimApplyService.reject(
+                moimCode,
+                userDetails.getMemberCode(),
+                request.getApplicantMemberCode()
+        );
+        return ApiResponse.success();
+    }
+
+
+    /*----------------------------------- 내부 유틸 -----------------------------------*/
+
     private <T> T parseRequest(String requestJson, Class<T> clazz) {
         try {
             return objectMapper.readValue(requestJson, clazz);
@@ -418,7 +331,6 @@ public class MoimController {
 
     private <T> void validate(T request) {
         Set<ConstraintViolation<T>> violations = validator.validate(request);
-
         if (!violations.isEmpty()) {
             throw new BusinessException(MoimErrorCode.INVALID_REQUEST);
         }

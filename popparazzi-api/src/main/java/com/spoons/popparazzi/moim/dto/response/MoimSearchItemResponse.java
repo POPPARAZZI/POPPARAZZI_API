@@ -1,5 +1,6 @@
 package com.spoons.popparazzi.moim.dto.response;
 
+import com.spoons.popparazzi.moim.dto.result.MoimSearchCardResult;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
@@ -40,4 +41,19 @@ public record MoimSearchItemResponse(
         @Schema(description = "마감 임박 여부", example = "true")
         boolean closingSoon
 ) {
+        public static MoimSearchItemResponse from(MoimSearchCardResult result) {
+                return new MoimSearchItemResponse(
+                        result.moimCode(),
+                        result.thumbnailUrl(),
+                        result.liked(),
+                        result.categories(),
+                        result.title(),
+                        result.address(),
+                        result.participantProfileUrls(),
+                        result.leaderNickname(),
+                        result.participantCount(),
+                        result.maxParticipantCount(),
+                        result.closingSoon()
+                );
+        }
 }

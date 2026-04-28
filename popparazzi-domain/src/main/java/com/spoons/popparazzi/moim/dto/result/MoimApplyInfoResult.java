@@ -5,4 +5,11 @@ public record MoimApplyInfoResult(
         String leaderNickname,
         String question
 ) {
+    public static MoimApplyInfoResult of(
+            String leaderProfileImageUrl,
+            String leaderNickname,
+            String question
+    ) {
+        return new MoimApplyInfoResult(leaderProfileImageUrl, leaderNickname, question);
+    }
 }

@@ -9,19 +9,29 @@ import java.util.List;
 public interface MoimCommandService {
 
     /**
-     * - 최종 등록 시 multipart로 요청이 들어오며,
-     *   모임 저장 + 파일 저장 + DB(file_master) insert 까지 한 번에 처리한다.
-     *
-     * @param command 생성 입력값(도메인 커맨드)
-     * @param files 첨부 이미지(최대 5장, 없을 수 있음)
-     * @param leaderMemberCode 로그인 유저(방장) 코드
-     * @return 생성된 모임 코드(mm_code)
+     * @methodName  : create
+     * @author      : seulgi Yang
+     * @param       : CreateMoimCommand, files, leaderMemberCode
+     * @returnType  : String
+     * @desc        : 모임 생성. 모임 저장 + 카테고리 매핑 + 파일 저장 일괄 처리
      */
     String create(CreateMoimCommand command, List<MultipartFile> files, String leaderMemberCode);
 
-    // 2. 모임 수정
-    String update(UpdateMoimCommand command, List<MultipartFile> files, String memberCode);
+    /**
+     * @methodName  : update
+     * @author      : seulgi Yang
+     * @param       : UpdateMoimCommand, files, requesterMemberCode
+     * @returnType  : String
+     * @desc        : 모임 수정. 카테고리 전체 교체 + 파일 유지/삭제/추가 처리
+     */
+    String update(UpdateMoimCommand command, List<MultipartFile> files, String requesterMemberCode);
 
-    // 3. 모임 삭제
+    /**
+     * @methodName  : delete
+     * @author      : seulgi Yang
+     * @param       : moimCode, requesterMemberCode
+     * @returnType  : void
+     * @desc        : 모임 삭제. 당일 삭제 불가. 첨부파일 삭제 + soft delete 처리
+     */
     void delete(String moimCode, String requesterMemberCode);
 }

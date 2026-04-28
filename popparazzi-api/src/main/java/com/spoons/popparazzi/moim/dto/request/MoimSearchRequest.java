@@ -1,5 +1,6 @@
 package com.spoons.popparazzi.moim.dto.request;
 
+import com.spoons.popparazzi.moim.dto.command.MoimSearchCommand;
 import com.spoons.popparazzi.util.PaginationInfo;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
@@ -21,6 +22,10 @@ public class MoimSearchRequest {
     @Valid
     @Schema(description = "페이징 정보")
     private PaginationInfo paginationInfo = defaultPagination();
+
+    public MoimSearchCommand toCommand(String memberCode) {
+        return new MoimSearchCommand(memberCode, keyword, paginationInfo);
+    }
 
     private PaginationInfo defaultPagination() {
         PaginationInfo paginationInfo = new PaginationInfo();
