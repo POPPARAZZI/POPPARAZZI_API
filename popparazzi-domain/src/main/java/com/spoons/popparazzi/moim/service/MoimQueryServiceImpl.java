@@ -1,5 +1,6 @@
 package com.spoons.popparazzi.moim.service;
 
+import com.spoons.popparazzi.config.CacheNames;
 import com.spoons.popparazzi.error.exception.BusinessException;
 import com.spoons.popparazzi.file.dto.query.MoimThumbTarget;
 import com.spoons.popparazzi.file.enums.FileType;
@@ -29,6 +30,7 @@ import com.spoons.popparazzi.util.PaginationInfo;
 import com.spoons.popparazzi.util.SearchKeywordNormalizer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
@@ -81,6 +83,7 @@ public class MoimQueryServiceImpl implements MoimQueryService {
         return buildNewestCards(items, memberCode);
     }
 
+    @Cacheable(value = CacheNames.HOT_MOIMS, key = "#p0")
     @Override
     public List<HotMoimCardResult> getHotMoimCardsForMain(int limit) {
         int fixedLimit = normalizeLimit(limit, HOT_DEFAULT_LIMIT);
