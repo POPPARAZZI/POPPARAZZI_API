@@ -34,9 +34,19 @@ spring:
 
   datasource:
     driver-class-name: net.sf.log4jdbc.sql.jdbcapi.DriverSpy
+#    url: jdbc:log4jdbc:postgresql://aws-1-ap-northeast-2.pooler.supabase.com:5432/postgres
+#    username: postgres.vjeftabbisgxwapfikgi
+#    password: '!tmvnswm123'
     url: jdbc:log4jdbc:postgresql://aws-1-ap-northeast-2.pooler.supabase.com:5432/postgres
-    username: postgres.vjeftabbisgxwapfikgi
-    password: '!tmvnswm123'
+    username: postgres.cmyczrsceydegldjhssh
+    password: 'Spoons26!!!!@!'
+
+    hikari:
+      maximum-pool-size: 5       # Supabase 15개 한도 내로 제한
+      minimum-idle: 2            # 최소 유지 커넥션
+      connection-timeout: 30000  # 30초 안에 커넥션 못 얻으면 에러
+      idle-timeout: 600000       # 10분 동안 안 쓰면 반납
+      max-lifetime: 1800000      # 커넥션 최대 수명 30분
 
   jpa:
     database: postgresql
@@ -51,3 +61,11 @@ spring:
         use_sql_comments: true
         jdbc:
           time_zone: Asia/Seoul
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      timeout: 2000ms
+
+  cache:
+    type: redis

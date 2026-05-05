@@ -27,9 +27,10 @@ public class LikeQueryRepositoryImpl implements LikeQueryRepository {
     public List<LikeRankQuery> findTopRankKeys(
             LikeType type,
             LocalDateTime since,
+            LocalDateTime until,
             Pageable pageable
     ) {
-        if (type == null || since == null || pageable == null) {
+        if (type == null || since == null || until == null || pageable == null) {
             return List.of();
         }
 
@@ -42,7 +43,8 @@ public class LikeQueryRepositoryImpl implements LikeQueryRepository {
                 .from(likeMapping)
                 .where(
                         likeMapping.type.eq(type),
-                        likeMapping.createdAt.goe(since)
+                        likeMapping.createdAt.goe(since),
+                        likeMapping.createdAt.lt(until)   // until 추가
                 )
                 .groupBy(likeMapping.targetCode)
                 .orderBy(likeMapping.count().desc())

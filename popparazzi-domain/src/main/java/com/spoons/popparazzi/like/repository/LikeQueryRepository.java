@@ -14,6 +14,7 @@ public interface LikeQueryRepository {
     List<LikeRankQuery> findTopRankKeys(
             LikeType type,
             LocalDateTime since,
+            LocalDateTime until,
             Pageable pageable
     );
 

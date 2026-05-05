@@ -11,7 +11,7 @@ public record HotMoimCardResponse(
         int currentParticipants,
         int maxParticipants,
         String thumbnailUrl,
-        long likeCountToday
+        long likeCount
 ) {
     public static HotMoimCardResponse from(HotMoimCardResult result) {
         return new HotMoimCardResponse(
@@ -21,7 +21,7 @@ public record HotMoimCardResponse(
                 result.currentParticipants(),
                 result.maxParticipants(),
                 result.thumbnailUrl(),
-                result.likeCountToday()
+                result.likeCount()
         );
     }
 }

@@ -1,12 +1,7 @@
 package com.spoons.popparazzi.moim.entity;
 
 import com.spoons.popparazzi.moim.enums.MoimMemberStatus;
-import jakarta.persistence.Column;
-import jakarta.persistence.EmbeddedId;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -14,7 +9,9 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "tbl_moim_member_mapping")
+@Table(
+        name = "tbl_moim_member_mapping"
+)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class MoimMemberMapping {

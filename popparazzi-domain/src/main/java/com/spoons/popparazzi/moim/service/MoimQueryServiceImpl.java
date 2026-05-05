@@ -84,10 +84,12 @@ public class MoimQueryServiceImpl implements MoimQueryService {
     @Override
     public List<HotMoimCardResult> getHotMoimCardsForMain(int limit) {
         int fixedLimit = normalizeLimit(limit, HOT_DEFAULT_LIMIT);
-        LocalDateTime since = LocalDate.now().atStartOfDay();
+
+        LocalDateTime until = LocalDate.now().atStartOfDay();   // 오늘 00:00 미만
+        LocalDateTime since = until.minusDays(1);               // 어제 00:00
 
         List<LikeRankQuery> ranks = likeQueryRepository.findTopRankKeys(
-                LikeType.M, since, PageRequest.of(0, fixedLimit)
+                LikeType.M, since, until, PageRequest.of(0, fixedLimit)
         );
 
         if (ranks.isEmpty()) return buildLatestHotFallback(fixedLimit);
@@ -334,7 +336,7 @@ public class MoimQueryServiceImpl implements MoimQueryService {
                             base.currentParticipants(),
                             base.maxParticipants(),
                             thumbMap.get(base.moimCode()),
-                            rank.likeCountToday()
+                            rank.likeCount()
                     );
                 })
                 .filter(Objects::nonNull)
